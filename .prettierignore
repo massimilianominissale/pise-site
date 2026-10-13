@@ -1,0 +1,4 @@
+src/payload-types.ts
+src/migrations/*.json
+src/migrations/2*.ts
+src/app/(payload)/

@@ -155,10 +155,12 @@ export default buildConfig({
     // En local, sans jeton, les fichiers restent sur le disque.
     vercelBlobStorage({
       enabled: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
-      collections: { media: true, documents: true },
+      collections: { media: { prefix: 'media' }, documents: { prefix: 'documents' } },
       token: process.env.BLOB_READ_WRITE_TOKEN || '',
       clientUploads: true,
       addRandomSuffix: true,
+      // Même schéma de base avec ou sans jeton Blob (local, préversion, production).
+      alwaysInsertFields: true,
     }),
 
     // Titre, description et image de partage sur chaque contenu public.

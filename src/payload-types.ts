@@ -309,6 +309,8 @@ export interface Media {
   caption?: string | null;
   credit?: string | null;
   brand?: (number | null) | Brand;
+  prefix?: string | null;
+  _objectKey?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -527,6 +529,8 @@ export interface Document {
   brand?: (number | null) | Brand;
   language?: ('fr' | 'en' | 'it' | 'multi') | null;
   year?: number | null;
+  prefix?: string | null;
+  _objectKey?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -1978,6 +1982,8 @@ export interface MediaSelect<T extends boolean = true> {
   caption?: T;
   credit?: T;
   brand?: T;
+  prefix?: T;
+  _objectKey?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -2035,6 +2041,8 @@ export interface DocumentsSelect<T extends boolean = true> {
   brand?: T;
   language?: T;
   year?: T;
+  prefix?: T;
+  _objectKey?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
