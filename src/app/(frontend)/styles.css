@@ -1,0 +1,100 @@
+/* Jetons du design system Agence PISE (repris tels quels de tokens.json). */
+:root {
+  --ink: #1f2227;
+  --ink-soft: #3a3e45;
+  --paper: #ffffff;
+  --stone: #f6f4f1;
+  --sand: #ebe6df;
+  --line: #ddd8d0;
+  --line-strong: #8f8b85;
+  --mute: #6b6964;
+  --mute-on-ink: #a9abb0;
+  --pise-teal: #2ba0a3;
+  --pise-ocean: #00577b;
+  --font-display: 'Archivo Variable', 'Helvetica Neue', Arial, sans-serif;
+  --font-text: 'Hanken Grotesk Variable', 'Helvetica Neue', Arial, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 16px/1.6 var(--font-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--pise-ocean);
+}
+
+/* Page d'attente, remplacée à l'étape des gabarits. */
+.holding {
+  min-height: 100vh;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 48px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 48px;
+}
+
+@media (min-width: 768px) {
+  .holding {
+    padding: 64px 48px;
+  }
+}
+
+.holding__text {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 960px;
+}
+
+.holding h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(40px, 7vw, 88px);
+  line-height: 0.98;
+  letter-spacing: -0.015em;
+}
+
+.eyebrow {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+.btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 28px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.btn:hover {
+  background: var(--ink-soft);
+  border-color: var(--ink-soft);
+}
