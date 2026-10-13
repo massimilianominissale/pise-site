@@ -48,3 +48,7 @@ node_modules/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# fichiers téléversés en local (sans Vercel Blob)
+/media
+/documents

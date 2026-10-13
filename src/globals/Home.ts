@@ -1,0 +1,210 @@
+import type { GlobalConfig } from 'payload'
+
+import { isEditor } from '../access'
+import { l } from '../collections/shared'
+import { linkField } from '../fields/link'
+
+/** Page d'accueil : la mosaïque et les sections qui la suivent, dans l'ordre des maquettes. */
+export const Home: GlobalConfig = {
+  slug: 'home',
+  label: l('Accueil', 'Home'),
+  admin: { group: l('Réglages', 'Settings') },
+  access: {
+    read: () => true,
+    update: isEditor,
+  },
+  versions: { drafts: true, max: 50 },
+  fields: [
+    {
+      type: 'tabs',
+      tabs: [
+        {
+          label: l('Mosaïque', 'Mosaic'),
+          fields: [
+            {
+              name: 'mosaic',
+              label: l('Tuiles de la mosaïque', 'Mosaic tiles'),
+              type: 'array',
+              minRows: 1,
+              maxRows: 16,
+              labels: { singular: l('Tuile', 'Tile'), plural: l('Tuiles', 'Tiles') },
+              admin: {
+                description: l(
+                  'L’ordre des tuiles est celui de la grille, de gauche à droite et de haut en bas.',
+                  'Tiles fill the grid left to right, top to bottom.',
+                ),
+              },
+              fields: [
+                {
+                  name: 'image',
+                  label: l('Image', 'Image'),
+                  type: 'upload',
+                  relationTo: 'media',
+                  required: true,
+                },
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'brand',
+                      label: l('Fabricant', 'Brand'),
+                      type: 'relationship',
+                      relationTo: 'brands',
+                      admin: { width: '50%' },
+                    },
+                    {
+                      name: 'range',
+                      label: l('Collection', 'Collection'),
+                      type: 'relationship',
+                      relationTo: 'ranges',
+                      admin: { width: '50%' },
+                    },
+                  ],
+                },
+                {
+                  name: 'label',
+                  label: l('Étiquette (si différente)', 'Label override'),
+                  type: 'text',
+                  localized: true,
+                  admin: {
+                    description: l(
+                      'Par défaut : nom de la collection.',
+                      'Defaults to the collection name.',
+                    ),
+                  },
+                },
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'size',
+                      label: l('Taille', 'Size'),
+                      type: 'select',
+                      defaultValue: '1x1',
+                      options: [
+                        { label: l('1 × 1', '1 × 1'), value: '1x1' },
+                        { label: l('2 × 1 (large)', '2 × 1 (wide)'), value: '2x1' },
+                        { label: l('1 × 2 (haute)', '1 × 2 (tall)'), value: '1x2' },
+                        { label: l('2 × 2 (grande)', '2 × 2 (large)'), value: '2x2' },
+                      ],
+                      admin: { width: '34%' },
+                    },
+                    {
+                      name: 'isNew',
+                      label: l('Badge « Nouveau »', '“New” badge'),
+                      type: 'checkbox',
+                      admin: { width: '33%' },
+                    },
+                    {
+                      name: 'pulse',
+                      label: l('Pastille animée', 'Pulsing dot'),
+                      type: 'checkbox',
+                      admin: { width: '33%' },
+                    },
+                  ],
+                },
+                linkField({ name: 'link', withLabel: false }),
+              ],
+            },
+          ],
+        },
+        {
+          label: l('Sections', 'Sections'),
+          fields: [
+            {
+              name: 'manifesto',
+              label: l('Manifeste', 'Manifesto'),
+              type: 'textarea',
+              localized: true,
+            },
+            {
+              name: 'featuredBrands',
+              label: l('Fabricants affichés', 'Brands shown'),
+              type: 'relationship',
+              relationTo: 'brands',
+              hasMany: true,
+            },
+            {
+              name: 'generator',
+              label: l('Générateur de visuels', 'Visual generator'),
+              type: 'group',
+              fields: [
+                { name: 'title', label: l('Titre', 'Title'), type: 'text', localized: true },
+                { name: 'text', label: l('Texte', 'Text'), type: 'textarea', localized: true },
+                { name: 'image', label: l('Image', 'Image'), type: 'upload', relationTo: 'media' },
+                {
+                  name: 'steps',
+                  label: l('Étapes', 'Steps'),
+                  type: 'array',
+                  labels: { singular: l('Étape', 'Step'), plural: l('Étapes', 'Steps') },
+                  maxRows: 4,
+                  fields: [
+                    {
+                      name: 'title',
+                      label: l('Titre', 'Title'),
+                      type: 'text',
+                      localized: true,
+                      required: true,
+                    },
+                    { name: 'text', label: l('Texte', 'Text'), type: 'textarea', localized: true },
+                  ],
+                },
+              ],
+            },
+            {
+              name: 'featuredProjects',
+              label: l('Réalisations affichées', 'Projects shown'),
+              type: 'relationship',
+              relationTo: 'projects',
+              hasMany: true,
+              maxRows: 6,
+            },
+            {
+              name: 'featuredTours',
+              label: l('Espaces virtuels affichés', 'Virtual tours shown'),
+              type: 'relationship',
+              relationTo: 'virtual-tours',
+              hasMany: true,
+              maxRows: 3,
+            },
+            {
+              name: 'imrsivo',
+              label: l('Partenariat IMRSIVO', 'IMRSIVO partnership'),
+              type: 'group',
+              fields: [
+                { name: 'title', label: l('Titre', 'Title'), type: 'text', localized: true },
+                { name: 'text', label: l('Texte', 'Text'), type: 'textarea', localized: true },
+                {
+                  name: 'images',
+                  label: l('Images', 'Images'),
+                  type: 'upload',
+                  relationTo: 'media',
+                  hasMany: true,
+                },
+              ],
+            },
+            {
+              name: 'appointments',
+              label: l('Rendez-vous', 'Appointments'),
+              type: 'group',
+              fields: [
+                { name: 'title', label: l('Titre', 'Title'), type: 'text', localized: true },
+                { name: 'text', label: l('Texte', 'Text'), type: 'textarea', localized: true },
+                { name: 'image', label: l('Image', 'Image'), type: 'upload', relationTo: 'media' },
+              ],
+            },
+            {
+              name: 'newsletter',
+              label: l('Newsletter', 'Newsletter'),
+              type: 'group',
+              fields: [
+                { name: 'title', label: l('Titre', 'Title'), type: 'text', localized: true },
+                { name: 'text', label: l('Texte', 'Text'), type: 'textarea', localized: true },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+}

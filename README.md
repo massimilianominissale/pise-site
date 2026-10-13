@@ -31,6 +31,20 @@ Le site s'ouvre sur http://localhost:3000 et le back-office sur http://localhost
 
 En local, le schéma de la base suit automatiquement le code. Sans `BLOB_READ_WRITE_TOKEN`, les médias sont stockés sur le disque.
 
+## Modèle de contenu
+
+| Groupe | Collections |
+|---|---|
+| Catalogue | Fabricants (`brands`), Collections (`ranges`), Produits (`products`), Catégories de produits, Secteurs |
+| Contenus | Réalisations, Visites virtuelles, Salons, Actualités, Pages (blocs), Questions fréquentes, Annonces, Équipe, Showrooms |
+| Médias | Médiathèque, Documents (niveau d'accès public, pro ou interne) |
+| Relation client | Demandes (`leads`), Comptes pro (`customers`, authentification séparée) |
+| Système | Utilisateurs, Redirections, Index de recherche |
+
+Réglages globaux : Accueil (mosaïque et sections), Navigation, Pied de page, Réglages généraux, Intégrations.
+
+Rôles des utilisateurs : administrateur, éditeur, commercial et assistant IA. Le compte IA ne peut écrire que des brouillons (`src/hooks/aiDraftsOnly.ts`) : la version publiée reste en ligne jusqu'à ce qu'un humain publie. Les règles sont vérifiées par `tests/int/model.int.spec.ts`.
+
 ## Faire évoluer le modèle de contenu
 
 Les collections sont décrites dans `src/collections`. Après toute modification de structure :
