@@ -1,7 +1,9 @@
-import * as migration_20261013_114936_initial from './20261013_114936_initial';
-import * as migration_20261013_190947_modele_de_contenu from './20261013_190947_modele_de_contenu';
-import * as migration_20261013_194519_stockage_blob from './20261013_194519_stockage_blob';
-import * as migration_20261013_200000_fabricants_de_depart from './20261013_200000_fabricants_de_depart';
+import * as migration_20261013_114936_initial from './20261013_114936_initial'
+import * as migration_20261013_190947_modele_de_contenu from './20261013_190947_modele_de_contenu'
+import * as migration_20261013_194519_stockage_blob from './20261013_194519_stockage_blob'
+import * as migration_20261013_200000_fabricants_de_depart from './20261013_200000_fabricants_de_depart'
+import * as migration_20261013_200939_gabarits_socle from './20261013_200939_gabarits_socle'
+import * as migration_20261013_201500_contenus_de_depart from './20261013_201500_contenus_de_depart'
 
 export const migrations = [
   {
@@ -22,6 +24,16 @@ export const migrations = [
   {
     up: migration_20261013_200000_fabricants_de_depart.up,
     down: migration_20261013_200000_fabricants_de_depart.down,
-    name: '20261013_200000_fabricants_de_depart'
+    name: '20261013_200000_fabricants_de_depart',
   },
-];
+  {
+    up: migration_20261013_200939_gabarits_socle.up,
+    down: migration_20261013_200939_gabarits_socle.down,
+    name: '20261013_200939_gabarits_socle',
+  },
+  {
+    up: migration_20261013_201500_contenus_de_depart.up,
+    down: migration_20261013_201500_contenus_de_depart.down,
+    name: '20261013_201500_contenus_de_depart',
+  },
+]

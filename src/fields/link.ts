@@ -37,7 +37,7 @@ export const linkField = ({
           defaultValue: 'internal',
           options: [
             { label: { fr: 'Page du site', en: 'Internal page' }, value: 'internal' },
-            { label: { fr: 'Adresse externe', en: 'External URL' }, value: 'external' },
+            { label: { fr: 'Adresse ou rubrique', en: 'URL or section' }, value: 'external' },
           ],
           admin: { layout: 'horizontal', width: '50%' },
         },
@@ -62,7 +62,13 @@ export const linkField = ({
       label: { fr: 'Adresse', en: 'URL' },
       type: 'text',
       required,
-      admin: { condition: (_, sibling) => sibling?.type === 'external' },
+      admin: {
+        condition: (_, sibling) => sibling?.type === 'external',
+        description: {
+          fr: 'Adresse complète (https://…) ou rubrique du site en français (/fabricants, /rendez-vous) : elle est traduite automatiquement en anglais et en italien.',
+          en: 'Full URL (https://…) or a site section in French (/fabricants, /rendez-vous): it is translated automatically.',
+        },
+      },
     },
   ]
   if (withLabel) {

@@ -112,8 +112,20 @@ export const Home: GlobalConfig = {
           label: l('Sections', 'Sections'),
           fields: [
             {
+              name: 'manifestoEyebrow',
+              label: l('Surtitre du manifeste', 'Manifesto eyebrow'),
+              type: 'text',
+              localized: true,
+            },
+            {
               name: 'manifesto',
-              label: l('Manifeste', 'Manifesto'),
+              label: l('Manifeste (titre principal de la page)', 'Manifesto (main page heading)'),
+              type: 'textarea',
+              localized: true,
+            },
+            {
+              name: 'manifestoLead',
+              label: l('Texte sous le manifeste', 'Manifesto lead'),
               type: 'textarea',
               localized: true,
             },

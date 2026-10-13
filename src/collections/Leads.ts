@@ -49,6 +49,7 @@ export const Leads: CollectionConfig = {
             { label: l('Rendez-vous', 'Appointment'), value: 'appointment' },
             { label: l('Accès pro', 'Pro access'), value: 'pro-access' },
             { label: l('Sourcing', 'Sourcing'), value: 'sourcing' },
+            { label: l('Newsletter', 'Newsletter'), value: 'newsletter' },
           ],
           admin: { width: '50%' },
         },

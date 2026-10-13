@@ -183,7 +183,22 @@ export const BRANDS: SeedBrand[] = [
   },
 ]
 
-type Ctx = { payload: Payload; req?: PayloadRequest }
+export type Ctx = { payload: Payload; req?: PayloadRequest }
+
+/** Retrouve une photo importée par le fichier d'origine (via son texte alternatif, unique). */
+export const findSeedMedia = async ({ payload, req }: Ctx, file: string): Promise<number | null> => {
+  const image = BRANDS.flatMap((b) => [b.card, b.hero, ...b.gallery]).find((i) => i.file === file)
+  if (!image) return null
+  const { docs } = await payload.find({
+    collection: 'media',
+    where: { alt: { equals: image.alt } },
+    locale: 'fr',
+    limit: 1,
+    depth: 0,
+    req,
+  })
+  return docs[0]?.id ?? null
+}
 
 const uploadImage = async ({ payload, req }: Ctx, image: SeedImage, brandId?: number) => {
   const doc = await payload.create({

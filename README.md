@@ -77,17 +77,37 @@ La migration générée dans `src/migrations` est à committer avec le code. Sur
 | `PAYLOAD_SECRET` | Secret de chiffrement de Payload, différent par environnement |
 | `NEXT_PUBLIC_SERVER_URL` | Adresse publique du site, sans barre finale : vide sur les préversions, renseignée en production une fois le domaine branché |
 | `BLOB_READ_WRITE_TOKEN` | Jeton Vercel Blob (injecté par Vercel), vide en local |
+| `SITE_INDEXABLE` | `true` en production le jour de la bascule du domaine : lève le `noindex` (jamais actif sur les préversions) |
 
 ## Organisation du code
 
 ```
 src/
-  app/(frontend)/     site public
-  app/(payload)/      back-office et API Payload (fichiers générés, à ne pas modifier)
-  collections/        modèle de contenu
-  migrations/         migrations de la base
-  payload.config.ts   configuration de Payload
-public/brand/         logos
+  app/(frontend)/[locale]/  site public, une route par gabarit (accueil, fabricants…)
+  app/(frontend)/styles.css feuille de style (jetons et composants du design system)
+  app/(payload)/            back-office et API Payload (fichiers générés, à ne pas modifier)
+  components/               en-tête, pied de page, cartes, mosaïque, formulaires
+  lib/                      lecture des contenus (payload.ts), adresses (links.ts), SEO
+  i18n/                     langues, rubriques traduites, libellés de l'interface
+  proxy.ts                  langue dans l'URL
+  collections/, globals/    modèle de contenu
+  seed/                     contenus de départ (fabricants, accueil, menus)
+  migrations/               migrations de la base
+  payload.config.ts         configuration de Payload
+public/brand/               logos
 ```
+
+### Langues et adresses
+
+Le français est servi sans préfixe (`/fabricants/nardi`), l'anglais et l'italien sous `/en` et `/it`
+avec des rubriques traduites (`/en/brands/nardi`, `/it/marchi/nardi`), déclarées dans `src/i18n/config.ts`.
+
+Chaque rubrique a **un dossier par langue** : le dossier français contient la page, les dossiers anglais
+et italien la reprennent en une ligne (`export { default, generateMetadata } from '../fabricants/page'`).
+Le proxy n'ajoute que la langue et redirige une rubrique saisie dans la mauvaise langue. Un test vérifie
+qu'aucun dossier ne manque.
+
+Dans le back-office, un lien vers une rubrique se saisit en français (`/rendez-vous`) : il est traduit
+automatiquement selon la langue de la page.
 
 Le site n'est pas encore lancé : toutes les pages portent `noindex` jusqu'à la bascule du domaine agencepise.fr.

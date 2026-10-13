@@ -35,6 +35,7 @@ import { Posts } from './collections/Posts'
 import { Footer } from './globals/Footer'
 import { Home } from './globals/Home'
 import { Integrations } from './globals/Integrations'
+import { Listings } from './globals/Listings'
 import { Navigation } from './globals/Navigation'
 import { Settings } from './globals/Settings'
 
@@ -130,7 +131,7 @@ export default buildConfig({
     // Système
     Users,
   ],
-  globals: [Home, Navigation, Footer, Settings, Integrations],
+  globals: [Home, Navigation, Footer, Listings, Settings, Integrations],
 
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
@@ -155,7 +156,12 @@ export default buildConfig({
     // En local, sans jeton, les fichiers restent sur le disque.
     vercelBlobStorage({
       enabled: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
-      collections: { media: { prefix: 'media' }, documents: { prefix: 'documents' } },
+      collections: {
+        // Images publiques : servies directement par Vercel Blob, sans passer par le serveur.
+        media: { prefix: 'media', disablePayloadAccessControl: true },
+        // Documents : servis par Payload, qui applique le niveau d'accès (public, pro, interne).
+        documents: { prefix: 'documents' },
+      },
       token: process.env.BLOB_READ_WRITE_TOKEN || '',
       clientUploads: true,
       addRandomSuffix: true,

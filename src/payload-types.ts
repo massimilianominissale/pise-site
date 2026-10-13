@@ -139,6 +139,7 @@ export interface Config {
     home: Home;
     navigation: Navigation;
     footer: Footer;
+    listings: Listing;
     settings: Setting;
     integrations: Integration;
   };
@@ -146,6 +147,7 @@ export interface Config {
     home: HomeSelect<false> | HomeSelect<true>;
     navigation: NavigationSelect<false> | NavigationSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
+    listings: ListingsSelect<false> | ListingsSelect<true>;
     settings: SettingsSelect<false> | SettingsSelect<true>;
     integrations: IntegrationsSelect<false> | IntegrationsSelect<true>;
   };
@@ -877,6 +879,9 @@ export interface Page {
                     relationTo: 'events';
                     value: number | Event;
                   } | null);
+              /**
+               * Full URL (https://…) or a site section in French (/fabricants, /rendez-vous): it is translated automatically.
+               */
               url?: string | null;
               label?: string | null;
             };
@@ -959,6 +964,9 @@ export interface Page {
                     relationTo: 'events';
                     value: number | Event;
                   } | null);
+              /**
+               * Full URL (https://…) or a site section in French (/fabricants, /rendez-vous): it is translated automatically.
+               */
               url?: string | null;
               label?: string | null;
             };
@@ -1020,6 +1028,9 @@ export interface Page {
                           relationTo: 'events';
                           value: number | Event;
                         } | null);
+                    /**
+                     * Full URL (https://…) or a site section in French (/fabricants, /rendez-vous): it is translated automatically.
+                     */
                     url?: string | null;
                     label?: string | null;
                   };
@@ -1103,6 +1114,9 @@ export interface Announcement {
           relationTo: 'events';
           value: number | Event;
         } | null);
+    /**
+     * Full URL (https://…) or a site section in French (/fabricants, /rendez-vous): it is translated automatically.
+     */
     url?: string | null;
     label?: string | null;
   };
@@ -1125,7 +1139,7 @@ export interface Announcement {
 export interface Lead {
   id: number;
   summary?: string | null;
-  kind: 'contact' | 'quote' | 'appointment' | 'pro-access' | 'sourcing';
+  kind: 'contact' | 'quote' | 'appointment' | 'pro-access' | 'sourcing' | 'newsletter';
   status: 'new' | 'in-progress' | 'quoted' | 'closed';
   firstName?: string | null;
   lastName?: string | null;
@@ -2281,12 +2295,17 @@ export interface Home {
                 relationTo: 'events';
                 value: number | Event;
               } | null);
+          /**
+           * Full URL (https://…) or a site section in French (/fabricants, /rendez-vous): it is translated automatically.
+           */
           url?: string | null;
         };
         id?: string | null;
       }[]
     | null;
+  manifestoEyebrow?: string | null;
   manifesto?: string | null;
+  manifestoLead?: string | null;
   featuredBrands?: (number | Brand)[] | null;
   generator?: {
     title?: string | null;
@@ -2372,6 +2391,9 @@ export interface Navigation {
                 relationTo: 'events';
                 value: number | Event;
               } | null);
+          /**
+           * Full URL (https://…) or a site section in French (/fabricants, /rendez-vous): it is translated automatically.
+           */
           url?: string | null;
           label?: string | null;
         };
@@ -2428,6 +2450,9 @@ export interface Footer {
             relationTo: 'events';
             value: number | Event;
           } | null);
+      /**
+       * Full URL (https://…) or a site section in French (/fabricants, /rendez-vous): it is translated automatically.
+       */
       url?: string | null;
     };
   };
@@ -2473,6 +2498,9 @@ export interface Footer {
                       relationTo: 'events';
                       value: number | Event;
                     } | null);
+                /**
+                 * Full URL (https://…) or a site section in French (/fabricants, /rendez-vous): it is translated automatically.
+                 */
                 url?: string | null;
                 label?: string | null;
               };
@@ -2520,12 +2548,71 @@ export interface Footer {
                 relationTo: 'events';
                 value: number | Event;
               } | null);
+          /**
+           * Full URL (https://…) or a site section in French (/fabricants, /rendez-vous): it is translated automatically.
+           */
           url?: string | null;
           label?: string | null;
         };
         id?: string | null;
       }[]
     | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * Leave a field empty to keep the default text.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "listings".
+ */
+export interface Listing {
+  id: number;
+  brands?: {
+    title?: string | null;
+    lead?: string | null;
+    image?: (number | null) | Media;
+    sourcing?: {
+      title?: string | null;
+      text?: string | null;
+      image?: (number | null) | Media;
+    };
+  };
+  projects?: {
+    title?: string | null;
+    lead?: string | null;
+    image?: (number | null) | Media;
+  };
+  tours?: {
+    title?: string | null;
+    lead?: string | null;
+    image?: (number | null) | Media;
+  };
+  news?: {
+    title?: string | null;
+    lead?: string | null;
+    image?: (number | null) | Media;
+  };
+  generator?: {
+    title?: string | null;
+    lead?: string | null;
+    image?: (number | null) | Media;
+  };
+  appointment?: {
+    title?: string | null;
+    lead?: string | null;
+    image?: (number | null) | Media;
+  };
+  contact?: {
+    title?: string | null;
+    lead?: string | null;
+    image?: (number | null) | Media;
+  };
+  pro?: {
+    title?: string | null;
+    lead?: string | null;
+    image?: (number | null) | Media;
+  };
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -2624,7 +2711,9 @@ export interface HomeSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  manifestoEyebrow?: T;
   manifesto?: T;
+  manifestoLead?: T;
   featuredBrands?: T;
   generator?:
     | T
@@ -2752,6 +2841,78 @@ export interface FooterSelect<T extends boolean = true> {
               label?: T;
             };
         id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "listings_select".
+ */
+export interface ListingsSelect<T extends boolean = true> {
+  brands?:
+    | T
+    | {
+        title?: T;
+        lead?: T;
+        image?: T;
+        sourcing?:
+          | T
+          | {
+              title?: T;
+              text?: T;
+              image?: T;
+            };
+      };
+  projects?:
+    | T
+    | {
+        title?: T;
+        lead?: T;
+        image?: T;
+      };
+  tours?:
+    | T
+    | {
+        title?: T;
+        lead?: T;
+        image?: T;
+      };
+  news?:
+    | T
+    | {
+        title?: T;
+        lead?: T;
+        image?: T;
+      };
+  generator?:
+    | T
+    | {
+        title?: T;
+        lead?: T;
+        image?: T;
+      };
+  appointment?:
+    | T
+    | {
+        title?: T;
+        lead?: T;
+        image?: T;
+      };
+  contact?:
+    | T
+    | {
+        title?: T;
+        lead?: T;
+        image?: T;
+      };
+  pro?:
+    | T
+    | {
+        title?: T;
+        lead?: T;
+        image?: T;
       };
   updatedAt?: T;
   createdAt?: T;
