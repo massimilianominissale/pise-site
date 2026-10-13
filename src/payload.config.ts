@@ -14,7 +14,10 @@ import { Users } from './collections/Users'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
-const serverURL = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+// Adresse publique, renseignée seulement quand le domaine définitif est branché.
+// Sans elle, Payload utilise des adresses relatives : le back-office fonctionne
+// sur n'importe quelle préversion Vercel sans configuration supplémentaire.
+const serverURL = process.env.NEXT_PUBLIC_SERVER_URL || ''
 
 export default buildConfig({
   serverURL,

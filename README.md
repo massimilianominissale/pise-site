@@ -61,7 +61,7 @@ La migration générée dans `src/migrations` est à committer avec le code. Sur
 |---|---|
 | `DATABASE_URL` | Connexion Postgres (injectée par l'intégration Neon sur Vercel) |
 | `PAYLOAD_SECRET` | Secret de chiffrement de Payload, différent par environnement |
-| `NEXT_PUBLIC_SERVER_URL` | Adresse publique du site, sans barre finale |
+| `NEXT_PUBLIC_SERVER_URL` | Adresse publique du site, sans barre finale : vide sur les préversions, renseignée en production une fois le domaine branché |
 | `BLOB_READ_WRITE_TOKEN` | Jeton Vercel Blob (injecté par Vercel), vide en local |
 
 ## Organisation du code
