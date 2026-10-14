@@ -643,6 +643,10 @@ export interface VirtualTour {
    * URL provided by IMRSIVO. Its domain must be listed in Settings › Integrations.
    */
   embedUrl?: string | null;
+  /**
+   * Embedded player: the tour’s domain must allow being displayed inside another site.
+   */
+  display?: ('link' | 'iframe') | null;
   location?: string | null;
   credit?: string | null;
   summary?: string | null;
@@ -1701,6 +1705,7 @@ export interface VirtualToursSelect<T extends boolean = true> {
   kind?: T;
   availability?: T;
   embedUrl?: T;
+  display?: T;
   location?: T;
   credit?: T;
   summary?: T;

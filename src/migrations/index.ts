@@ -7,7 +7,9 @@ import * as migration_20261013_201500_contenus_de_depart from './20261013_201500
 import * as migration_20261014_041333_rubrique_produits from './20261014_041333_rubrique_produits'
 import * as migration_20261014_050000_produits_de_depart from './20261014_050000_produits_de_depart'
 import * as migration_20261014_171107_liste_de_salons from './20261014_171107_liste_de_salons'
+import * as migration_20261014_184812_ouverture_des_visites from './20261014_184812_ouverture_des_visites'
 import * as migration_20261014_200000_ancien_site from './20261014_200000_ancien_site'
+import * as migration_20261014_210000_imrsivo_et_accueil from './20261014_210000_imrsivo_et_accueil'
 
 export const migrations = [
   {
@@ -56,8 +58,18 @@ export const migrations = [
     name: '20261014_171107_liste_de_salons',
   },
   {
+    up: migration_20261014_184812_ouverture_des_visites.up,
+    down: migration_20261014_184812_ouverture_des_visites.down,
+    name: '20261014_184812_ouverture_des_visites',
+  },
+  {
     up: migration_20261014_200000_ancien_site.up,
     down: migration_20261014_200000_ancien_site.down,
     name: '20261014_200000_ancien_site',
+  },
+  {
+    up: migration_20261014_210000_imrsivo_et_accueil.up,
+    down: migration_20261014_210000_imrsivo_et_accueil.down,
+    name: '20261014_210000_imrsivo_et_accueil',
   },
 ]

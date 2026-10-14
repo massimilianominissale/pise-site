@@ -1,14 +1,24 @@
+import { readFile } from 'node:fs/promises'
+import path from 'path'
 import type { Payload, PayloadRequest } from 'payload'
 
-import { isEmptyRich, toLexical } from '../rich'
-import { LEGACY_PAGES, LEGACY_SETTINGS, LEGACY_SHOWROOM, type LegacyBlock } from './agency'
+import { findSeedMedia } from '../brands'
+import { h2, isEmptyRich, toLexical } from '../rich'
+import { forgetUploadedFile } from '../uploads'
 import {
-  KYMO,
+  LEGACY_PAGES,
+  LEGACY_SETTINGS,
+  LEGACY_SHOWROOM,
+  type LegacyBlock,
+  type LegacyPage,
+} from './agency'
+import {
   LEGACY_BRANDS,
   LEGACY_RANGES,
   type LegacyBrand,
   type LegacyImage,
   type Locale,
+  type SeedImage,
 } from './brands'
 import { LEGACY_EVENTS, LEGACY_TOURS } from './events'
 
@@ -28,7 +38,6 @@ export type Ctx = { payload: Payload; req?: PayloadRequest; fetchFile?: FetchFil
 
 export type LegacyContent = {
   brands: Record<string, LegacyBrand>
-  kymo: (Omit<typeof KYMO, 'data'> & { data: LegacyBrand }) | null
   ranges: typeof LEGACY_RANGES
   events: typeof LEGACY_EVENTS
   tours: typeof LEGACY_TOURS
@@ -39,7 +48,6 @@ export type LegacyContent = {
 
 export const LEGACY: LegacyContent = {
   brands: LEGACY_BRANDS,
-  kymo: KYMO,
   ranges: LEGACY_RANGES,
   events: LEGACY_EVENTS,
   tours: LEGACY_TOURS,
@@ -99,13 +107,36 @@ type Run = Ctx & {
   failures: number
 }
 
+const IMAGES_DIR = path.resolve(process.cwd(), 'src/seed/images')
+
+const newRun = (ctx: Ctx): Run => ({
+  ...ctx,
+  media: new Map(),
+  failures: 0,
+  report: { added: [], skipped: [], conflicts: [], missingImages: [] },
+})
+
+const readRepoFile = async (file: string): Promise<LegacyFile | null> => {
+  try {
+    const data = await readFile(path.join(IMAGES_DIR, file))
+    const extension = file.split('.').pop()?.toLowerCase() ?? ''
+    return { data, mimetype: MIME[extension] ?? 'image/jpeg', name: file, size: data.length }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Importe une photo (ancien site ou dépôt) une seule fois : une photo déjà présente, reconnue à
+ * son texte alternatif, est réutilisée. Le texte alternatif est ensuite traduit.
+ */
 const uploadImage = async (run: Run, image: LegacyImage, brand?: number) => {
   const { payload, req } = run
   if (run.media.has(image.file)) return run.media.get(image.file) ?? null
-  const name = safeFileName(image.file)
   const { docs } = await payload.find({
     collection: 'media',
-    where: { filename: { equals: name } },
+    where: { alt: { equals: image.alt.fr } },
+    locale: 'fr',
     limit: 1,
     depth: 0,
     req,
@@ -114,21 +145,27 @@ const uploadImage = async (run: Run, image: LegacyImage, brand?: number) => {
     run.media.set(image.file, docs[0].id)
     return docs[0].id
   }
-  const file = run.failures >= 4 ? null : await (run.fetchFile ?? fetchLegacyFile)(image.file)
-  run.failures = file ? 0 : run.failures + 1
+  let file: LegacyFile | null
+  if (image.repo) file = await readRepoFile(image.file)
+  else {
+    file = run.failures >= 4 ? null : await (run.fetchFile ?? fetchLegacyFile)(image.file)
+    run.failures = file ? 0 : run.failures + 1
+  }
   if (!file) {
     run.report.missingImages.push(image.file)
     run.media.set(image.file, null)
     return null
   }
+  forgetUploadedFile(req)
   const doc = await payload.create({
     collection: 'media',
     data: { alt: image.alt.fr, ...(brand ? { brand } : {}) },
-    file: { ...file, name },
+    file: { ...file, name: safeFileName(image.file) },
     locale: 'fr',
     req,
   })
   for (const locale of OTHER) {
+    forgetUploadedFile(req)
     await payload.update({
       collection: 'media',
       id: doc.id,
@@ -140,6 +177,14 @@ const uploadImage = async (run: Run, image: LegacyImage, brand?: number) => {
   run.media.set(image.file, doc.id)
   return doc.id
 }
+
+/** Photo à importer, ou photo du Drive déjà présente sur le site. */
+const resolveImage = async (run: Run, image: LegacyImage | SeedImage, brand?: number) =>
+  'seed' in image ? findSeedMedia(run, image.seed) : uploadImage(run, image, brand)
+
+/** Pour les autres migrations : importe une photo et renvoie son identifiant (ou null). */
+export const importImage = (ctx: Ctx, image: LegacyImage | SeedImage) =>
+  resolveImage(newRun(ctx), image)
 
 /* ---------- Outils ---------- */
 
@@ -264,25 +309,6 @@ const fillBrand = async (run: Run, slug: string, data: LegacyBrand) => {
 
 const importBrands = async (run: Run, content: LegacyContent) => {
   for (const [slug, data] of Object.entries(content.brands)) await fillBrand(run, slug, data)
-
-  const { kymo } = content
-  if (!kymo) return
-  if (!(await brandBySlug(run, kymo.slug))) {
-    await run.payload.create({
-      collection: 'brands',
-      data: {
-        name: kymo.name,
-        slug: kymo.slug,
-        universes: kymo.universes,
-        order: kymo.order,
-        _status: 'published',
-      },
-      locale: 'fr',
-      req: run.req,
-    })
-    run.report.added.push(`Fabricant créé : ${kymo.name}`)
-  }
-  await fillBrand(run, kymo.slug, kymo.data)
 }
 
 /* ---------- Collections (Noon, Decibel) ---------- */
@@ -412,7 +438,7 @@ const importTours = async (run: Run, content: LegacyContent) => {
       run.report.skipped.push(`Visite ${tour.title.fr} : déjà présente`)
       continue
     }
-    const thumbnail = tour.thumbnail ? await uploadImage(run, tour.thumbnail) : null
+    const thumbnail = tour.thumbnail ? await resolveImage(run, tour.thumbnail) : null
     const doc = await payload.create({
       collection: 'virtual-tours',
       data: {
@@ -502,82 +528,118 @@ const importShowroom = async (run: Run, content: LegacyContent) => {
 
 type SavedBlock = { id?: string | null; links?: { id?: string | null }[] | null }
 
-/** Les blocs sont communs aux langues : la traduction reprend leurs identifiants. */
-const withIds = (blocks: LegacyBlock[], saved: SavedBlock[]) =>
-  blocks.map((block, i) => ({
-    ...block,
-    id: saved[i]?.id,
-    ...(block.blockType === 'cta'
-      ? { links: block.links.map((row, j) => ({ ...row, id: saved[i]?.links?.[j]?.id })) }
-      : {}),
-  }))
+/**
+ * Blocs prêts à enregistrer : photos importées (sans photo, un bloc « image et texte » devient
+ * un bloc texte), et pour une traduction les identifiants des blocs déjà créés (les blocs sont
+ * communs aux langues, seuls leurs textes sont traduits).
+ */
+const prepareBlocks = async (run: Run, blocks: LegacyBlock[], saved?: SavedBlock[]) => {
+  const out: Record<string, unknown>[] = []
+  for (const [i, block] of blocks.entries()) {
+    let data: Record<string, unknown> = { ...block }
+    if (block.blockType === 'mediaText') {
+      const image = await uploadImage(run, block.image)
+      data = image
+        ? { ...block, image }
+        : {
+            blockType: 'content',
+            body: {
+              root: {
+                ...block.body.root,
+                children: [
+                  ...toLexical([h2(block.title)]).root.children,
+                  ...block.body.root.children,
+                ],
+              },
+            },
+          }
+    }
+    if (saved) {
+      data.id = saved[i]?.id
+      if (block.blockType === 'cta')
+        data.links = block.links.map((row, j) => ({ ...row, id: saved[i]?.links?.[j]?.id }))
+    }
+    out.push(data)
+  }
+  return out
+}
 
-const importPages = async (run: Run, content: LegacyContent) => {
+/** Crée une page publiée dans les trois langues ; null si une page a déjà cet identifiant. */
+const createPage = async (run: Run, page: LegacyPage, parent?: number) => {
   const { payload, req } = run
-  const ids = new Map<string, number>()
-  for (const page of content.pages) {
-    const { docs } = await payload.find({
+  const { docs } = await payload.find({
+    collection: 'pages',
+    where: { slug: { equals: page.slug.fr } },
+    draft: true,
+    limit: 1,
+    depth: 0,
+    locale: 'fr',
+    req,
+  })
+  if (docs[0]) {
+    run.report.skipped.push(`Page ${page.title.fr} : déjà présente`)
+    return { id: docs[0].id, created: false }
+  }
+  const doc = await payload.create({
+    collection: 'pages',
+    data: {
+      title: page.title.fr,
+      slug: page.slug.fr,
+      parent,
+      layout: (await prepareBlocks(run, page.layout('fr'))) as never,
+      _status: 'published',
+    },
+    locale: 'fr',
+    req,
+  })
+  for (const locale of OTHER) {
+    await payload.update({
       collection: 'pages',
-      where: { slug: { equals: page.slug.fr } },
-      draft: true,
-      limit: 1,
-      depth: 0,
-      locale: 'fr',
+      id: doc.id,
+      data: {
+        title: page.title[locale],
+        slug: page.slug[locale],
+        layout: (await prepareBlocks(
+          run,
+          page.layout(locale as Locale),
+          (doc.layout ?? []) as SavedBlock[],
+        )) as never,
+        _status: 'published',
+      },
+      locale,
       req,
     })
-    if (docs[0]) {
-      ids.set(page.key, docs[0].id)
-      run.report.skipped.push(`Page ${page.title.fr} : déjà présente`)
-      continue
-    }
+  }
+  run.report.added.push(`Page créée : ${page.title.fr}`)
+  return { id: doc.id, created: true }
+}
+
+/** Pour les autres migrations : crée une page (ou retrouve celle qui existe déjà). */
+export const createLegacyPage = async (ctx: Ctx, page: LegacyPage) => {
+  const run = newRun(ctx)
+  const result = await createPage(run, page)
+  for (const file of run.report.missingImages)
+    ctx.payload.logger.warn(`Photo non récupérée · ${file}`)
+  return result
+}
+
+const importPages = async (run: Run, content: LegacyContent) => {
+  const ids = new Map<string, number>()
+  for (const page of content.pages) {
     const parent = page.parent ? ids.get(page.parent) : undefined
     if (page.parent && !parent) {
       run.report.conflicts.push(`Page ${page.title.fr} : page parente introuvable, non créée`)
       continue
     }
-    const doc = await payload.create({
-      collection: 'pages',
-      data: {
-        title: page.title.fr,
-        slug: page.slug.fr,
-        parent,
-        layout: page.layout('fr') as never,
-        _status: 'published',
-      },
-      locale: 'fr',
-      req,
-    })
-    ids.set(page.key, doc.id)
-    for (const locale of OTHER) {
-      await payload.update({
-        collection: 'pages',
-        id: doc.id,
-        data: {
-          title: page.title[locale],
-          slug: page.slug[locale],
-          layout: withIds(
-            page.layout(locale as Locale),
-            (doc.layout ?? []) as SavedBlock[],
-          ) as never,
-          _status: 'published',
-        },
-        locale,
-        req,
-      })
-    }
-    run.report.added.push(`Page créée : ${page.title.fr}`)
+    const { id } = await createPage(run, page, parent)
+    ids.set(page.key, id)
   }
 }
 
 /* ---------- Point d'entrée ---------- */
 
 export const importLegacy = async (ctx: Ctx, content: LegacyContent = LEGACY) => {
-  const run: Run = {
-    ...ctx,
-    media: new Map(),
-    failures: 0,
-    report: { added: [], skipped: [], conflicts: [], missingImages: [] },
-  }
+  const run = newRun(ctx)
   await importBrands(run, content)
   await importRanges(run, content)
   await importEvents(run, content)

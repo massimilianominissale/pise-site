@@ -1,6 +1,8 @@
 import path from 'path'
 import type { Payload, PayloadRequest } from 'payload'
 
+import { forgetUploadedFile } from './uploads'
+
 /**
  * Données de départ : les six secteurs et les huit fabricants présentés dans les maquettes,
  * avec leurs photos (dossier « PISE 2026 » du Drive).
@@ -186,7 +188,10 @@ export const BRANDS: SeedBrand[] = [
 export type Ctx = { payload: Payload; req?: PayloadRequest }
 
 /** Retrouve une photo importée par le fichier d'origine (via son texte alternatif, unique). */
-export const findSeedMedia = async ({ payload, req }: Ctx, file: string): Promise<number | null> => {
+export const findSeedMedia = async (
+  { payload, req }: Ctx,
+  file: string,
+): Promise<number | null> => {
   const image = BRANDS.flatMap((b) => [b.card, b.hero, ...b.gallery]).find((i) => i.file === file)
   if (!image) return null
   const { docs } = await payload.find({
@@ -201,6 +206,7 @@ export const findSeedMedia = async ({ payload, req }: Ctx, file: string): Promis
 }
 
 const uploadImage = async ({ payload, req }: Ctx, image: SeedImage, brandId?: number) => {
+  forgetUploadedFile(req)
   const doc = await payload.create({
     collection: 'media',
     data: { alt: image.alt, credit: image.credit, brand: brandId },

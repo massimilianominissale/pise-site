@@ -745,6 +745,12 @@ a:hover .pise-link::after,
   gap: 16px;
 }
 
+.site-header__lang {
+  gap: 12px;
+  padding-right: 20px;
+  border-right: 1px solid var(--line);
+}
+
 .lang a {
   font: 600 12px/1 var(--font-display);
   letter-spacing: 0.16em;
@@ -1416,7 +1422,8 @@ a:hover .play {
   background: var(--stone);
 }
 
-.imrsivo__img--wide {
+.imrsivo__img--wide,
+.imrsivo__img:nth-child(2):last-child {
   grid-column: span 2;
   aspect-ratio: 16 / 9;
 }
@@ -3511,6 +3518,17 @@ a.pise-chip[aria-current='page']:hover {
 
 .viewer__poster:hover .play {
   transform: scale(1.06);
+}
+
+/* Visite ouverte dans un nouvel onglet : la vignette est un lien. */
+a.viewer__poster {
+  display: block;
+  text-decoration: none;
+}
+
+.viewer__newtab {
+  color: var(--paper);
+  opacity: 0.8;
 }
 
 .viewer__overlay {

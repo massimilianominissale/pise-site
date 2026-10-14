@@ -4,7 +4,7 @@ import { importLegacy } from '../seed/legacy'
 
 /**
  * Migration de données : reprise des contenus de l'ancien site agencepise.fr (fiches fabricants,
- * Kymo, collections Noon et Decibel, salons, visites IMRSIVO, coordonnées, pages de l'agence,
+ * collections Noon et Decibel, salons, visites IMRSIVO, coordonnées, pages de l'agence,
  * mentions légales). Ajout seul : rien de déjà saisi n'est remplacé (voir src/seed/legacy).
  * Les photos manquantes sont téléchargées depuis l'ancien site pendant le déploiement.
  */

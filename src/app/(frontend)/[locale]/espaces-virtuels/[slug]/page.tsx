@@ -14,6 +14,7 @@ import { getDictionary } from '@/i18n/dictionary'
 import { toBrandSummary } from '@/lib/brands'
 import { safeEmbedUrl } from '@/lib/embed'
 import { docHref } from '@/lib/links'
+import { tourViewer } from '@/lib/tours'
 import { localizedDocPaths } from '@/lib/localized'
 import {
   getAllVirtualTours,
@@ -65,8 +66,7 @@ export default async function TourPage({ params }: Props) {
     getAllVirtualTours(locale),
   ])
 
-  const src =
-    tour.availability !== 'soon' ? safeEmbedUrl(tour.embedUrl, integrations.frameOrigins) : null
+  const viewer = tourViewer(tour, integrations.frameOrigins)
   const brands = (tour.brands ?? []).filter((b): b is Brand => typeof b === 'object' && b !== null)
   const products = (tour.products ?? []).filter(
     (p): p is Product => typeof p === 'object' && p !== null && p._status === 'published',
@@ -126,12 +126,13 @@ export default async function TourPage({ params }: Props) {
             </div>
           </div>
 
-          {src ? (
+          {viewer ? (
             <EmbedViewer
-              src={src}
+              src={viewer.src}
+              mode={viewer.mode}
               title={tour.title}
               caption={[tour.title, tour.location].filter(Boolean).join(' · ')}
-              provider={t.embedded}
+              provider={viewer.mode === 'iframe' ? t.embedded : t.external}
               poster={tour.thumbnail}
               rooms={(tour.rooms ?? []).map((r) => ({
                 label: r.label,
@@ -141,6 +142,8 @@ export default async function TourPage({ params }: Props) {
                 enter: t.enter,
                 fullscreen: t.fullscreen,
                 exitFullscreen: t.exitFullscreen,
+                open: t.open,
+                newTab: dict.tours.newTab,
               }}
               action={
                 <Link className="pise-btn pise-btn--small pise-btn--light" href={appointment}>

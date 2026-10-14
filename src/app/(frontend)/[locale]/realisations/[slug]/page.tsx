@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 
 import { BrandCard } from '@/components/brands/BrandCard'
-import { PlayIcon } from '@/components/cards'
+import { PlayIcon, TourAnchor } from '@/components/cards'
 import { ProductCard } from '@/components/products/ProductCard'
 import { ProjectTile } from '@/components/projects/ProjectTile'
 import { asMedia, Img } from '@/components/ui/Img'
@@ -14,6 +14,7 @@ import { getDictionary } from '@/i18n/dictionary'
 import { toBrandSummary } from '@/lib/brands'
 import { namesOf } from '@/lib/format'
 import { docHref } from '@/lib/links'
+import { tourLink } from '@/lib/tours'
 import { localizedDocPaths } from '@/lib/localized'
 import { getProjectBySlug, getProjectsList } from '@/lib/payload'
 import { localizedAlternates, ogImages, SITE_URL } from '@/lib/seo'
@@ -228,10 +229,11 @@ export default async function ProjectPage({ params }: Props) {
       {tour ? (
         <section className="band band--ink">
           <div className="container split split--tour">
-            <Link
+            <TourAnchor
               className="tour-visual"
-              href={docHref(locale, 'tours', tour) ?? '#'}
-              aria-label={tour.title}
+              link={tourLink(locale, tour)}
+              label={tour.title}
+              newTabLabel={dict.tours.newTab}
             >
               <Img
                 media={tour.thumbnail ?? project.cover}
@@ -242,18 +244,19 @@ export default async function ProjectPage({ params }: Props) {
               <span className="tour-card__play">
                 <PlayIcon />
               </span>
-            </Link>
+            </TourAnchor>
             <div className="split__text">
               <span className="pise-eyebrow eyebrow-sky">{dict.tours.kinds[tour.kind]}</span>
               <h2 className="sec-title">{t.tourTitle}</h2>
               {tour.summary ? <p className="body on-ink-mute">{tour.summary}</p> : null}
               <div className="actions actions--center">
-                <Link
+                <TourAnchor
                   className="pise-btn pise-btn--light"
-                  href={docHref(locale, 'tours', tour) ?? '#'}
+                  link={tourLink(locale, tour)}
+                  newTabLabel={dict.tours.newTab}
                 >
                   {dict.brand.enter}
-                </Link>
+                </TourAnchor>
               </div>
               {tour.credit ? (
                 <span className="cap on-ink-mute">{dict.brand.producedBy(tour.credit)}</span>

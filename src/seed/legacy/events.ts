@@ -1,4 +1,4 @@
-import { type LegacyImage, same, type T } from './brands'
+import { type LegacyImage, same, type SeedImage, type T } from './brands'
 
 /**
  * Salons de l'ancien site (articles « Salons passés »), avec leurs dates officielles,
@@ -214,7 +214,8 @@ export type LegacyTour = {
   embedUrl: string
   location?: string
   summary: T
-  thumbnail?: LegacyImage
+  /** Capture de l'ancien site, ou photo du Drive déjà importée (vignettes des maquettes). */
+  thumbnail?: LegacyImage | SeedImage
   brands: string[]
   order: number
 }
@@ -225,11 +226,21 @@ const standSummary: T = {
   it: 'Rivivete il nostro stand al Salone del Mobile 2025 in foto immersive a 360°.',
 }
 
+/** Capture d'écran de la visite publiée sur l'ancien site (article Salone del Mobile 2025). */
+export const standCapture = (file: string, name: string): LegacyImage => ({
+  file,
+  alt: {
+    fr: `Visite virtuelle du stand ${name} au Salone del Mobile 2025`,
+    en: `Virtual tour of the ${name} stand at Salone del Mobile 2025`,
+    it: `Visita virtuale dello stand ${name} al Salone del Mobile 2025`,
+  },
+})
+
 const stand = (
   brand: string,
   name: string,
   embedUrl: string,
-  screenshot: string,
+  thumbnail: LegacyImage | SeedImage,
   order: number,
 ): LegacyTour => ({
   slug: same(`salone-2025-${brand}`),
@@ -242,40 +253,30 @@ const stand = (
   embedUrl,
   location: 'Milan',
   summary: standSummary,
-  thumbnail: {
-    file: screenshot,
-    alt: {
-      fr: `Visite virtuelle du stand ${name}`,
-      en: `Virtual tour of the ${name} stand`,
-      it: `Visita virtuale dello stand ${name}`,
-    },
-  },
+  thumbnail,
   brands: [brand],
   order,
 })
 
+/**
+ * Visites IMRSIVO de l'ancien site (sans le showroom virtuel PISE). Ordre et vignettes de
+ * Johanson, Nardi et System 180 repris des maquettes (bloc « Visitez nos showrooms »).
+ */
 export const LEGACY_TOURS: LegacyTour[] = [
-  {
-    slug: {
-      fr: 'showroom-virtuel-pise',
-      en: 'pise-virtual-showroom',
-      it: 'showroom-virtuale-pise',
-    },
-    title: {
-      fr: 'Showroom virtuel PISE',
-      en: 'PISE virtual showroom',
-      it: 'Showroom virtuale PISE',
-    },
-    kind: 'pise-showroom',
-    embedUrl: 'https://imrsivo.com/Player/index.php?projectId=604&userId=306&spaceName=LOBBY-1',
-    summary: {
-      fr: 'Les produits distribués par l’agence, présentés dans différents univers : déplacez-vous d’un espace à l’autre et ouvrez la fiche de chaque produit.',
-      en: 'The products the agency represents, shown in a range of settings: move from one space to the next and open each product’s sheet.',
-      it: 'I prodotti distribuiti dall’agenzia, presentati in diversi ambienti: spostatevi da uno spazio all’altro e aprite la scheda di ogni prodotto.',
-    },
-    brands: [],
-    order: 1,
-  },
+  stand(
+    'johanson-design',
+    'Johanson Design',
+    'https://imrsivo.com/Player/index.php?projectId=707&userId=306&spaceName=JOHANSON3',
+    { seed: 'johanson-showroom-portrait.jpg' },
+    1,
+  ),
+  stand(
+    'nardi',
+    'Nardi',
+    'https://imrsivo.com/Player/index.php?projectId=708&userId=306&spaceName=07',
+    { seed: 'nardi-maximo.jpg' },
+    2,
+  ),
   {
     slug: same('showroom-system-180'),
     title: { fr: 'Showroom System 180', en: 'System 180 showroom', it: 'Showroom System 180' },
@@ -286,35 +287,22 @@ export const LEGACY_TOURS: LegacyTour[] = [
       en: 'Explore the System 180 showroom in 3D.',
       it: 'Visitate lo showroom di System 180 in 3D.',
     },
+    thumbnail: { seed: 'system180-forest-2.jpg' },
     brands: ['system180'],
-    order: 2,
+    order: 3,
   },
-  stand(
-    'nardi',
-    'Nardi',
-    'https://imrsivo.com/Player/index.php?projectId=708&userId=306&spaceName=07',
-    '2024/12/Capture-decran-2025-05-14-a-16.55.40.png',
-    3,
-  ),
-  stand(
-    'johanson-design',
-    'Johanson Design',
-    'https://imrsivo.com/Player/index.php?projectId=707&userId=306&spaceName=JOHANSON3',
-    '2024/12/Capture-decran-2025-05-14-a-16.46.25.png',
-    4,
-  ),
   stand(
     'milla-et-milli',
     'Milla & Milli',
     'https://imrsivo.com/Player/index.php?draft=cHJvamVjdElkPTcwNyZ1c2VySWQ9MzA2JnNwYWNlTmFtZT1NSUxMQTM=',
-    '2024/12/Capture-decran-2025-05-14-a-16.49.55.png',
-    5,
+    standCapture('2024/12/Capture-decran-2025-05-14-a-16.49.55.png', 'Milla & Milli'),
+    4,
   ),
   stand(
     'fabbian',
     'Fabbian',
     'https://imrsivo.com/Player/index.php?draft=cHJvamVjdElkPTcwNyZ1c2VySWQ9MzA2JnNwYWNlTmFtZT1GQUJCSUFO',
-    '2024/12/Capture-decran-2025-05-14-a-17.40.57.png',
-    6,
+    standCapture('2024/12/Capture-decran-2025-05-14-a-17.40.57.png', 'Fabbian'),
+    5,
   ),
 ]

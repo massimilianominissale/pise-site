@@ -18,7 +18,19 @@ type Props = {
   rooms?: Room[]
   /** Charger tout de suite (générateur) ou sur clic (visites 3D, plus lourdes). */
   autoLoad?: boolean
-  labels: { enter: string; fullscreen: string; exitFullscreen: string }
+  /**
+   * « iframe » : lecteur intégré à la page. « link » : vignette qui ouvre la visite dans un
+   * nouvel onglet (pour les outils qui refusent d'être affichés dans un autre site).
+   */
+  mode?: 'iframe' | 'link'
+  labels: {
+    enter: string
+    fullscreen: string
+    exitFullscreen: string
+    /** Mode « link » : bouton d'ouverture et mention du nouvel onglet. */
+    open?: string
+    newTab?: string
+  }
   /** Bouton en surimpression, en bas à droite (prise de rendez-vous). */
   action?: ReactNode
   className?: string
@@ -36,6 +48,7 @@ export function EmbedViewer({
   poster,
   rooms = [],
   autoLoad = false,
+  mode = 'iframe',
   labels,
   action,
   className,
@@ -52,6 +65,9 @@ export function EmbedViewer({
     return () => document.removeEventListener('fullscreenchange', onChange)
   }, [])
 
+  const external = mode === 'link'
+  const tab = { target: '_blank', rel: 'noopener noreferrer' } as const
+
   const toggleFullscreen = () => {
     if (document.fullscreenElement) void document.exitFullscreen()
     else void frame.current?.requestFullscreen?.()
@@ -63,16 +79,45 @@ export function EmbedViewer({
         <span className="viewer__live" aria-hidden="true" />
         <span className="viewer__title">{caption || title}</span>
         {provider ? <span className="cap viewer__provider">{provider}</span> : null}
-        <button
-          type="button"
-          className="pise-btn pise-btn--small pise-btn--light"
-          onClick={toggleFullscreen}
-        >
-          {fullscreen ? labels.exitFullscreen : labels.fullscreen}
-        </button>
+        {external ? (
+          <a className="pise-btn pise-btn--small pise-btn--light" href={current} {...tab}>
+            {labels.open ?? labels.enter} ↗
+            {labels.newTab ? <span className="sr-only"> ({labels.newTab})</span> : null}
+          </a>
+        ) : (
+          <button
+            type="button"
+            className="pise-btn pise-btn--small pise-btn--light"
+            onClick={toggleFullscreen}
+          >
+            {fullscreen ? labels.exitFullscreen : labels.fullscreen}
+          </button>
+        )}
       </div>
       <div className="viewer__stage">
-        {loaded ? (
+        {external ? (
+          <a className="viewer__poster" href={src} {...tab}>
+            <Img media={poster} sizes="100vw" alt="" />
+            <span className="tour-card__scrim" />
+            <span className="viewer__enter">
+              <span className="play" aria-hidden="true">
+                <svg
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#1f2227"
+                  strokeWidth="1.5"
+                  strokeLinejoin="round"
+                >
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </span>
+              <span className="pise-eyebrow">{labels.enter} ↗</span>
+              {labels.newTab ? <span className="cap viewer__newtab">{labels.newTab}</span> : null}
+            </span>
+          </a>
+        ) : loaded ? (
           <iframe
             key={current}
             src={current}
@@ -108,20 +153,31 @@ export function EmbedViewer({
           <div className="viewer__overlay">
             {rooms.length > 1 ? (
               <div className="viewer__rooms" role="group">
-                {rooms.map((r, i) => (
-                  <button
-                    key={`${r.label}-${i}`}
-                    type="button"
-                    className="pise-chip viewer__room"
-                    aria-pressed={i === room || (room < 0 && i === 0)}
-                    onClick={() => {
-                      setRoom(i)
-                      setLoaded(true)
-                    }}
-                  >
-                    {r.label}
-                  </button>
-                ))}
+                {rooms.map((r, i) =>
+                  external ? (
+                    <a
+                      key={`${r.label}-${i}`}
+                      className="pise-chip viewer__room"
+                      href={r.url ?? src}
+                      {...tab}
+                    >
+                      {r.label}
+                    </a>
+                  ) : (
+                    <button
+                      key={`${r.label}-${i}`}
+                      type="button"
+                      className="pise-chip viewer__room"
+                      aria-pressed={i === room || (room < 0 && i === 0)}
+                      onClick={() => {
+                        setRoom(i)
+                        setLoaded(true)
+                      }}
+                    >
+                      {r.label}
+                    </button>
+                  ),
+                )}
               </div>
             ) : (
               <span />

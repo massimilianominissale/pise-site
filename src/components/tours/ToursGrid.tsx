@@ -9,6 +9,8 @@ import { Img } from '@/components/ui/Img'
 export type TourItem = {
   id: number
   href: string | null
+  /** La vignette ouvre la visite IMRSIVO dans un nouvel onglet. */
+  external: boolean
   title: string
   kind: string
   kindLabel: string
@@ -21,7 +23,7 @@ export type TourItem = {
 type Props = {
   tours: TourItem[]
   kinds: { value: string; label: string }[]
-  labels: { all: string; filter: string; soon: string }
+  labels: { all: string; filter: string; soon: string; newTab: string }
   /** Dernière case de la grille (inscription aux nouveaux espaces). */
   extra?: ReactNode
 }
@@ -56,6 +58,7 @@ export function ToursGrid({ tours, kinds, labels, extra }: Props) {
                 {[tour.kindLabel, tour.location].filter(Boolean).join(' · ')}
               </span>
               <span className="h3">{tour.title}</span>
+              {tour.external ? <span className="sr-only"> ({labels.newTab})</span> : null}
               {tour.brands.length ? (
                 <span className="tagrow">
                   {tour.brands.map((b) => (
@@ -65,6 +68,19 @@ export function ToursGrid({ tours, kinds, labels, extra }: Props) {
               ) : null}
             </>
           )
+          if (tour.href && tour.external) {
+            return (
+              <a
+                key={tour.id}
+                className="p-card"
+                href={tour.href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {body}
+              </a>
+            )
+          }
           return tour.href ? (
             <Link
               key={tour.id}

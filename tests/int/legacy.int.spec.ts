@@ -7,7 +7,8 @@ import { legacyRedirects } from '@/lib/legacy-redirects'
 import config from '@/payload.config'
 import { type FetchFile, importLegacy, type LegacyContent } from '@/seed/legacy'
 import { same } from '@/seed/legacy/brands'
-import { p } from '@/seed/rich'
+import { p, toLexical } from '@/seed/rich'
+import { forgetUploadedFile } from '@/seed/uploads'
 
 /**
  * Reprise de l'ancien site : ajout seul. Rien de saisi n'est remplacé, une fiche en cours
@@ -37,16 +38,15 @@ const brandData = {
 
 const content = (): LegacyContent => ({
   brands: {
-    [slug('a')]: { ...brandData, logo: { file: `2024/01/logo-${stamp}.png`, alt: same('Logo') } },
+    [slug('a')]: {
+      ...brandData,
+      logo: { file: `2024/01/logo-${stamp}.png`, alt: same(`Logo A ${stamp}`) },
+    },
     [slug('b')]: brandData,
-    [slug('c')]: { ...brandData, logo: { file: `2024/01/absent-${stamp}.png`, alt: same('Logo') } },
-  },
-  kymo: {
-    name: `Nouveau ${stamp}`,
-    slug: slug('new'),
-    universes: ['furniture'],
-    order: 99,
-    data: brandData,
+    [slug('c')]: {
+      ...brandData,
+      logo: { file: `2024/01/absent-${stamp}.png`, alt: same(`Logo C ${stamp}`) },
+    },
   },
   ranges: [],
   events: [
@@ -72,7 +72,22 @@ const content = (): LegacyContent => ({
   tours: [],
   settings: null,
   showroom: null,
-  pages: [],
+  pages: [
+    {
+      key: 'test',
+      slug: same(slug('page')),
+      title: { fr: 'Page reprise', en: 'Imported page', it: 'Pagina ripresa' },
+      layout: (l) => [
+        {
+          blockType: 'mediaText',
+          image: { file: 'pise-equipe.jpg', repo: true, alt: same(`Équipe ${stamp}`) },
+          imagePosition: 'left',
+          title: `Titre ${l}`,
+          body: toLexical([p(`Texte ${l}`)]),
+        },
+      ],
+    },
+  ],
 })
 
 const brand = async (s: string, locale: 'fr' | 'en' = 'fr') => {
@@ -129,12 +144,22 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  const created = await payload.find({
-    collection: 'brands',
-    where: { slug: { equals: slug('new') } },
+  const pages = await payload.find({
+    collection: 'pages',
+    where: { slug: { equals: slug('page') } },
     depth: 0,
   })
-  brandIds.push(...created.docs.map((d) => d.id))
+  const pageMedia = pages.docs.flatMap((page) =>
+    (page.layout ?? []).flatMap((b) =>
+      b.blockType === 'mediaText' && typeof b.image === 'number' ? [b.image] : [],
+    ),
+  )
+  if (pages.docs.length)
+    await payload.delete({
+      collection: 'pages',
+      where: { id: { in: pages.docs.map((d) => d.id) } },
+    })
+  mediaIds.push(...pageMedia)
   const events = await payload.find({
     collection: 'events',
     where: { slug: { like: `legacy-event-` } },
@@ -187,9 +212,6 @@ describe('reprise de l’ancien site', () => {
   })
 
   it('crée ce qui manque et laisse les documents existants', async () => {
-    const created = await brand(slug('new'))
-    expect(created.tagline).toBe('Reprise')
-
     const existing = await payload.findByID({
       collection: 'events',
       id: eventIds[0]!,
@@ -206,6 +228,33 @@ describe('reprise de l’ancien site', () => {
     })
     expect(docs[0]?.name).toBe('Imported fair')
     expect(docs[0]?.brands).toEqual([brandIds[0]])
+  })
+
+  it('garde la photo d’un bloc dans chaque langue de la page', async () => {
+    const find = (locale: 'fr' | 'en') =>
+      payload.find({
+        collection: 'pages',
+        where: { slug: { equals: slug('page') } },
+        locale,
+        depth: 0,
+      })
+    const [fr, en] = await Promise.all([find('fr'), find('en')])
+    const block = (doc: (typeof fr.docs)[number] | undefined) => doc?.layout?.[0]
+    const frBlock = block(fr.docs[0])
+    const enBlock = block(en.docs[0])
+    expect(frBlock?.blockType).toBe('mediaText')
+    expect(enBlock?.blockType).toBe('mediaText')
+    if (frBlock?.blockType !== 'mediaText' || enBlock?.blockType !== 'mediaText') return
+    expect(frBlock.image).toBeTruthy()
+    expect(enBlock.image).toBe(frBlock.image)
+    expect(frBlock.title).toBe('Titre fr')
+    expect(enBlock.title).toBe('Titre en')
+  })
+
+  it('oublie le fichier mémorisé par le stockage avant chaque envoi', () => {
+    const req = { context: { _payloadCloudStorage: { file: 'premier' }, autre: 1 } }
+    forgetUploadedFile(req as never)
+    expect(req.context).toEqual({ autre: 1 })
   })
 
   it('n’ajoute rien à la seconde exécution', async () => {
@@ -225,7 +274,7 @@ describe('redirections de l’ancien site', () => {
 
   it('envoie les fiches fabricants et les salons vers les nouvelles pages', () => {
     const to = (source: string) => redirects.find((r) => r.source === source)?.destination
-    expect(to('/index.php/portfolio/kymo')).toBe('/fabricants/kymo')
+    expect(to('/index.php/portfolio/kymo')).toBe('/fabricants')
     expect(to('/index.php/portfolio/noon-by-johanson')).toBe('/fabricants/johanson-design/noon')
     expect(to('/index.php/nos-valeurs-nos-services')).toBe('/agence')
     // La règle générique /index.php/:path* vient en dernier.

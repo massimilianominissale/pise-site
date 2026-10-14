@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 
 import { BrandFilterGrid } from '@/components/brands/BrandFilterGrid'
 import { ProjectCard, TourCard } from '@/components/cards'
+import { ImrsivoPartner } from '@/components/home/ImrsivoPartner'
 import { Mosaic } from '@/components/home/Mosaic'
 import { NewsletterForm } from '@/components/home/NewsletterForm'
 import { JsonLd } from '@/components/ui/JsonLd'
@@ -12,7 +13,13 @@ import { isLocale, type Locale, localizedPath } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionary'
 import { toBrandSummary } from '@/lib/brands'
 import { formatDateRange } from '@/lib/format'
-import { getBrands, getGlobal, getProjects, getUpcomingEvents, getVirtualTours } from '@/lib/payload'
+import {
+  getBrands,
+  getGlobal,
+  getProjects,
+  getUpcomingEvents,
+  getVirtualTours,
+} from '@/lib/payload'
 import { alternates, ogImages, SITE_URL } from '@/lib/seo'
 import type { Project, VirtualTour } from '@/payload-types'
 
@@ -20,15 +27,18 @@ type Props = { params: Promise<{ locale: string }> }
 
 const UNIVERSE_ORDER = ['furniture', 'lighting', 'outdoor', 'acoustics'] as const
 
-const published = <T extends { _status?: 'draft' | 'published' | null }>(items: unknown[] | null | undefined) =>
-  (items ?? []).filter(
-    (i): i is T => !!i && typeof i === 'object' && (i as T)._status !== 'draft',
-  )
+const published = <T extends { _status?: 'draft' | 'published' | null }>(
+  items: unknown[] | null | undefined,
+) =>
+  (items ?? []).filter((i): i is T => !!i && typeof i === 'object' && (i as T)._status !== 'draft')
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params
   if (!isLocale(locale)) return {}
-  const [home, settings] = await Promise.all([getGlobal('home', locale), getGlobal('settings', locale)])
+  const [home, settings] = await Promise.all([
+    getGlobal('home', locale),
+    getGlobal('settings', locale),
+  ])
   const firstTile = home.mosaic?.[0]?.image
   return {
     title: { absolute: home.meta?.title || settings.siteName || 'Agence PISE' },
@@ -44,12 +54,11 @@ export default async function HomePage({ params }: Props) {
   const locale: Locale = param
   const dict = getDictionary(locale)
 
-  const [home, settings, allBrands, liveTours, allTours, events] = await Promise.all([
+  const [home, settings, allBrands, liveTours, events] = await Promise.all([
     getGlobal('home', locale),
     getGlobal('settings', locale),
     getBrands(locale),
     getVirtualTours(locale, { limit: 3 }),
-    getVirtualTours(locale, { limit: 6, liveOnly: false }),
     getUpcomingEvents(locale, 2),
   ])
 
@@ -59,18 +68,21 @@ export default async function HomePage({ params }: Props) {
     ? featuredIds.map((id) => allBrands.find((b) => b.id === id)).filter((b) => b !== undefined)
     : allBrands
   const brands = brandDocs.map((b) => toBrandSummary(b, locale, dict))
-  const universes = UNIVERSE_ORDER.filter((u) => brands.some((b) => b.universes.includes(u))).map((u) => ({
-    value: u,
-    label: dict.universes[u],
-  }))
+  const universes = UNIVERSE_ORDER.filter((u) => brands.some((b) => b.universes.includes(u))).map(
+    (u) => ({
+      value: u,
+      label: dict.universes[u],
+    }),
+  )
 
   const featuredProjects = published<Project>(home.featuredProjects)
-  const projects = featuredProjects.length ? featuredProjects : await getProjects(locale, { limit: 3 })
+  const projects = featuredProjects.length
+    ? featuredProjects
+    : await getProjects(locale, { limit: 3 })
   const featuredTours = published<VirtualTour>(home.featuredTours)
   const tours = featuredTours.length ? featuredTours : liveTours
 
   const appointmentHref = localizedPath(locale, 'appointment')
-  const imrsivoImages = (home.imrsivo?.images ?? []).map(asMedia).filter(Boolean)
   const steps = home.generator?.steps ?? []
 
   return (
@@ -96,7 +108,9 @@ export default async function HomePage({ params }: Props) {
 
       <section className="container manifesto">
         <div className="manifesto__title">
-          {home.manifestoEyebrow ? <span className="pise-eyebrow eyebrow-mute">{home.manifestoEyebrow}</span> : null}
+          {home.manifestoEyebrow ? (
+            <span className="pise-eyebrow eyebrow-mute">{home.manifestoEyebrow}</span>
+          ) : null}
           <h1 className="manifesto__h1">{home.manifesto || settings.siteName}</h1>
         </div>
         <div className="manifesto__side">
@@ -167,7 +181,12 @@ export default async function HomePage({ params }: Props) {
           </div>
           <div className="project-grid">
             {projects.slice(0, 3).map((project) => (
-              <ProjectCard key={project.id} project={project} locale={locale} sizes="(min-width: 1100px) 33vw, 100vw" />
+              <ProjectCard
+                key={project.id}
+                project={project}
+                locale={locale}
+                sizes="(min-width: 1100px) 33vw, 100vw"
+              />
             ))}
           </div>
           <div>
@@ -192,11 +211,23 @@ export default async function HomePage({ params }: Props) {
               </Link>
             </div>
             <div className={`tours-grid tours-grid--${Math.min(tours.length, 3)}`}>
-              <TourCard tour={tours[0]} locale={locale} dict={dict} large sizes="(min-width: 1100px) 66vw, 100vw" />
+              <TourCard
+                tour={tours[0]}
+                locale={locale}
+                dict={dict}
+                large
+                sizes="(min-width: 1100px) 66vw, 100vw"
+              />
               {tours.length > 1 ? (
                 <div className="tours-grid__side">
                   {tours.slice(1, 3).map((tour) => (
-                    <TourCard key={tour.id} tour={tour} locale={locale} dict={dict} sizes="(min-width: 1100px) 33vw, 100vw" />
+                    <TourCard
+                      key={tour.id}
+                      tour={tour}
+                      locale={locale}
+                      dict={dict}
+                      sizes="(min-width: 1100px) 33vw, 100vw"
+                    />
                   ))}
                 </div>
               ) : null}
@@ -206,42 +237,12 @@ export default async function HomePage({ params }: Props) {
         </section>
       ) : null}
 
-      {home.imrsivo?.title ? (
-        <section id="imrsivo" className={`container split split--imrsivo${imrsivoImages.length ? '' : ' split--solo'}`}>
-          <div className="split__text">
-            <span className="pise-eyebrow eyebrow-mute">{dict.imrsivo.eyebrow}</span>
-            <h2 className="sec-title">{home.imrsivo.title}</h2>
-            {home.imrsivo.text ? <p className="lead lead--sm">{home.imrsivo.text}</p> : null}
-            {allTours.length ? (
-              <ul className="rows">
-                {allTours.slice(0, 4).map((tour) => (
-                  <li key={tour.id} className="rdv-row">
-                    <span className="body">{tour.title}</span>
-                    <span className="cap">{tour.availability === 'soon' ? dict.tours.soon : dict.tours.online}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            <div className="actions">
-              <Link className="pise-btn pise-btn--outline" href={localizedPath(locale, 'tours')}>
-                {dict.imrsivo.cta}
-              </Link>
-            </div>
-          </div>
-          {imrsivoImages.length ? (
-            <div className="imrsivo__media">
-              {imrsivoImages.slice(0, 3).map((image, i) => (
-                <div key={image!.id} className={`imrsivo__img${i === 0 ? ' imrsivo__img--wide' : ''}`}>
-                  <Img media={image} sizes={i === 0 ? '(min-width: 1100px) 50vw, 100vw' : '25vw'} />
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </section>
-      ) : null}
+      <ImrsivoPartner imrsivo={home.imrsivo} locale={locale} dict={dict} id="imrsivo" />
 
       <section id="rdv" className="band band--stone">
-        <div className={`container split split--rdv${asMedia(home.appointments?.image) ? '' : ' split--solo'}`}>
+        <div
+          className={`container split split--rdv${asMedia(home.appointments?.image) ? '' : ' split--solo'}`}
+        >
           {asMedia(home.appointments?.image) ? (
             <div className="rdv__img">
               <Img media={home.appointments?.image} sizes="(min-width: 1100px) 50vw, 100vw" />
@@ -278,7 +279,11 @@ export default async function HomePage({ params }: Props) {
           {events.map((event) => {
             const href = event.registrationUrl || `${appointmentHref}?salon=${event.slug ?? ''}`
             const external = /^https?:/.test(href)
-            const place = [event.city, event.venue, event.booth ? `${dict.events.booth} ${event.booth}` : null]
+            const place = [
+              event.city,
+              event.venue,
+              event.booth ? `${dict.events.booth} ${event.booth}` : null,
+            ]
               .filter(Boolean)
               .join(' · ')
             return (
@@ -288,7 +293,9 @@ export default async function HomePage({ params }: Props) {
                 href={href}
                 {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
               >
-                <span className="pise-eyebrow eyebrow-ocean">{formatDateRange(locale, event.startDate, event.endDate)}</span>
+                <span className="pise-eyebrow eyebrow-ocean">
+                  {formatDateRange(locale, event.startDate, event.endDate)}
+                </span>
                 <span className="h2">{event.name}</span>
                 {place ? <span className="body mute">{place}</span> : null}
                 <span className="pise-link">{dict.events.book}</span>

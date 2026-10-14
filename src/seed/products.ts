@@ -1,6 +1,7 @@
 import path from 'path'
 
 import { type Ctx, findSeedMedia } from './brands'
+import { forgetUploadedFile } from './uploads'
 
 /**
  * Produits de départ : les quatre produits Nardi identifiés sur les photos du Drive,
@@ -79,7 +80,7 @@ type SeedProduct = {
 }
 
 /** Photos propres aux finitions (dossier Nardi du Drive, nommées par coloris). */
-const FINISH_IMAGES: Record<string, { alt: T; credit?: string }> = {
+export const FINISH_IMAGES: Record<string, { alt: T; credit?: string }> = {
   'nardi-net-lounge-anthracite.jpg': {
     alt: {
       fr: 'Détail de l’assise ajourée du fauteuil Net Lounge anthracite, plaid rayé sur l’accoudoir',
@@ -282,6 +283,7 @@ const finishImage = async (ctx: Ctx, file: string, brandId: number) => {
     req,
   })
   if (existing.docs[0]) return existing.docs[0].id
+  forgetUploadedFile(req)
   const doc = await payload.create({
     collection: 'media',
     data: { alt: meta.alt.fr, credit: meta.credit, brand: brandId },
@@ -290,6 +292,7 @@ const finishImage = async (ctx: Ctx, file: string, brandId: number) => {
     req,
   })
   for (const locale of LOCALES_OTHER) {
+    forgetUploadedFile(req)
     await payload.update({
       collection: 'media',
       id: doc.id,

@@ -2,19 +2,20 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { ImrsivoPartner } from '@/components/home/ImrsivoPartner'
 import { NewsletterForm } from '@/components/home/NewsletterForm'
 import { type TourItem, ToursGrid } from '@/components/tours/ToursGrid'
 import { EmbedViewer } from '@/components/ui/EmbedViewer'
-import { asMedia, Img } from '@/components/ui/Img'
 import { JsonLd } from '@/components/ui/JsonLd'
 import { isLocale, type Locale, localizedPath } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionary'
 import { safeEmbedUrl } from '@/lib/embed'
 import { namesOf } from '@/lib/format'
 import { docHref } from '@/lib/links'
+import { tourLink, tourUrl, tourViewer } from '@/lib/tours'
 import { getAllVirtualTours, getGlobal, getIntegrations } from '@/lib/payload'
 import { alternates, ogImages, SITE_URL } from '@/lib/seo'
-import type { Media, VirtualTour } from '@/payload-types'
+import type { VirtualTour } from '@/payload-types'
 
 type Props = { params: Promise<{ locale: string }> }
 
@@ -48,24 +49,22 @@ export default async function ToursPage({ params }: Props) {
   ])
 
   // Visite affichée en grand : la première visite en ligne mise en avant, sinon la première en ligne.
-  const playable = (tour: VirtualTour) =>
-    tour.availability !== 'soon' ? safeEmbedUrl(tour.embedUrl, integrations.frameOrigins) : null
-  const live = tours.filter((tour) => playable(tour))
+  const live = tours.filter((tour) => tourUrl(tour))
   const hero = live.find((tour) => tour.featured) ?? live[0] ?? null
-  const heroSrc = hero ? playable(hero) : null
+  const heroViewer = hero ? tourViewer(hero, integrations.frameOrigins) : null
 
   // Visites en ligne d'abord, puis celles qui ouvrent bientôt.
   const items: TourItem[] = [...tours]
-    .sort((a, b) => Number(Boolean(playable(b))) - Number(Boolean(playable(a))))
+    .sort((a, b) => Number(Boolean(tourUrl(b))) - Number(Boolean(tourUrl(a))))
     .map((tour) => ({
       id: tour.id,
-      href: docHref(locale, 'tours', tour),
+      ...(({ href, external }) => ({ href, external }))(tourLink(locale, tour)),
       title: tour.title,
       kind: tour.kind,
       kindLabel: dict.tours.kinds[tour.kind],
       location: tour.location ?? null,
       brands: namesOf(tour.brands),
-      live: Boolean(playable(tour)),
+      live: Boolean(tourUrl(tour)),
       image: tour.thumbnail,
     }))
   const kinds = KIND_ORDER.filter((k) => tours.some((tour) => tour.kind === k)).map((k) => ({
@@ -78,9 +77,6 @@ export default async function ToursPage({ params }: Props) {
       format: 'virtual-tour',
       ...(tour?.slug ? { visite: tour.slug } : {}),
     })}`
-  const imrsivoImages = (home.imrsivo?.images ?? [])
-    .map(asMedia)
-    .filter((m): m is Media => Boolean(m))
   const title = listings.tours?.title || t.title
 
   return (
@@ -114,12 +110,13 @@ export default async function ToursPage({ params }: Props) {
             </div>
           </div>
 
-          {hero && heroSrc ? (
+          {hero && heroViewer ? (
             <EmbedViewer
-              src={heroSrc}
+              src={heroViewer.src}
+              mode={heroViewer.mode}
               title={hero.title}
               caption={[hero.title, hero.location].filter(Boolean).join(' · ')}
-              provider={t.embedded}
+              provider={heroViewer.mode === 'iframe' ? t.embedded : t.external}
               poster={hero.thumbnail}
               rooms={(hero.rooms ?? []).map((r) => ({
                 label: r.label,
@@ -129,6 +126,8 @@ export default async function ToursPage({ params }: Props) {
                 enter: t.enter,
                 fullscreen: t.fullscreen,
                 exitFullscreen: t.exitFullscreen,
+                open: t.open,
+                newTab: dict.tours.newTab,
               }}
               action={
                 <Link className="pise-btn pise-btn--small pise-btn--light" href={appointment(hero)}>
@@ -148,7 +147,12 @@ export default async function ToursPage({ params }: Props) {
           <ToursGrid
             tours={items}
             kinds={kinds}
-            labels={{ all: dict.all, filter: t.kindsFilter, soon: dict.tours.soon }}
+            labels={{
+              all: dict.all,
+              filter: t.kindsFilter,
+              soon: dict.tours.soon,
+              newTab: dict.tours.newTab,
+            }}
             extra={
               <div className="tour-list__signup">
                 <span className="h3">{t.newsletterTitle}</span>
@@ -185,39 +189,7 @@ export default async function ToursPage({ params }: Props) {
 
       {home.imrsivo?.title ? (
         <section className="band band--stone">
-          <div
-            className={`container split split--imrsivo${imrsivoImages.length ? '' : ' split--solo'}`}
-          >
-            <div className="split__text">
-              <span className="pise-eyebrow eyebrow-mute">{dict.imrsivo.eyebrow}</span>
-              <h2 className="sec-title">{home.imrsivo.title}</h2>
-              {home.imrsivo.text ? <p className="lead lead--sm">{home.imrsivo.text}</p> : null}
-              <div className="partner-cta">
-                <span className="body">{t.partnerCta}</span>
-                <Link
-                  className="pise-btn pise-btn--outline pise-btn--small"
-                  href={`${localizedPath(locale, 'contact')}?demande=imrsivo`}
-                >
-                  {t.contactUs}
-                </Link>
-              </div>
-            </div>
-            {imrsivoImages.length ? (
-              <div className="imrsivo__media">
-                {imrsivoImages.slice(0, 3).map((image, i) => (
-                  <div
-                    key={image.id}
-                    className={`imrsivo__img${i === 0 ? ' imrsivo__img--wide' : ''}`}
-                  >
-                    <Img
-                      media={image}
-                      sizes={i === 0 ? '(min-width: 1100px) 50vw, 100vw' : '25vw'}
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </div>
+          <ImrsivoPartner imrsivo={home.imrsivo} locale={locale} dict={dict} />
         </section>
       ) : null}
     </>

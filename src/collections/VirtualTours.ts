@@ -70,6 +70,33 @@ export const VirtualTours: CollectionConfig = {
       },
     },
     {
+      name: 'display',
+      label: l('Ouverture de la visite', 'How the tour opens'),
+      type: 'radio',
+      defaultValue: 'link',
+      options: [
+        {
+          label: l(
+            'Vignette : la visite s’ouvre dans un nouvel onglet',
+            'Thumbnail: opens in a new tab',
+          ),
+          value: 'link',
+        },
+        {
+          label: l('Lecteur intégré à la page (iframe)', 'Player embedded in the page (iframe)'),
+          value: 'iframe',
+        },
+      ],
+      admin: {
+        layout: 'horizontal',
+        description: l(
+          'Lecteur intégré : le domaine de la visite doit accepter d’être affiché dans un autre site.',
+          'Embedded player: the tour’s domain must allow being displayed inside another site.',
+        ),
+        condition: (data) => data?.availability !== 'soon',
+      },
+    },
+    {
       type: 'row',
       fields: [
         { name: 'location', label: l('Lieu', 'Location'), type: 'text', admin: { width: '50%' } },

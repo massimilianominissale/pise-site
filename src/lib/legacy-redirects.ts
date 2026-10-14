@@ -14,7 +14,7 @@ const PORTFOLIO: Record<string, string> = {
   axolight: '/fabricants/axolight',
   fabbian: '/fabricants/fabbian',
   'mobilier-johanson-design': '/fabricants/johanson-design',
-  kymo: '/fabricants/kymo',
+  kymo: '/fabricants',
   'chaises-et-tables-de-jardin-et-de-collectivites-dinterieur-et-dexterieur-nardi-outdoor':
     '/fabricants/nardi',
   system180: '/fabricants/system180',

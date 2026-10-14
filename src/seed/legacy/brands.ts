@@ -10,8 +10,14 @@ export type Locale = 'fr' | 'en' | 'it'
 export type T = Record<Locale, string>
 export const same = (value: string): T => ({ fr: value, en: value, it: value })
 
-/** Fichier de l'ancien site, chemin relatif à wp-content/uploads/. */
-export type LegacyImage = { file: string; alt: T }
+/**
+ * Photo à importer : fichier de l'ancien site (chemin relatif à wp-content/uploads/), ou fichier
+ * du dépôt (src/seed/images) quand `repo` est vrai.
+ */
+export type LegacyImage = { file: string; alt: T; repo?: boolean }
+
+/** Photo déjà importée depuis le Drive (src/seed/brands.ts), retrouvée par son fichier d'origine. */
+export type SeedImage = { seed: string }
 
 export type LegacyBrand = {
   tagline?: T
@@ -493,55 +499,6 @@ export const LEGACY_BRANDS: Record<string, LegacyBrand> = {
       ],
     },
   },
-}
-
-/** Fabricant présent sur l'ancien site mais pas encore sur le nouveau. */
-export const KYMO = {
-  name: 'Kymo',
-  slug: 'kymo',
-  universes: ['furniture'] as ('furniture' | 'lighting' | 'outdoor' | 'acoustics')[],
-  order: 9,
-  data: {
-    country: { fr: 'Allemagne', en: 'Germany', it: 'Germania' },
-    tagline: same('Floorwear'),
-    website: 'https://www.kymo.de/en/',
-    logo: logo('2015/02/LOGO-KIMO.png', 'Kymo'),
-    story: {
-      fr: [
-        p(
-          'Notre philosophie : ce qui nous anime, c’est une volonté absolue de créer quelque chose de bon. Quelque chose de beau. Quelque chose de nouveau. Quelque chose de différent. Quelque chose dont nous pouvons être fiers. Nous voulons simplement faire les choses différemment – être meilleurs, inhabituels, intéressants – dans les petites choses et dans les grandes choses.',
-        ),
-        p(
-          'Ainsi, chaque détail compte. Et faire les choses à la main est la clé. Parce que vous devez ressentir quelque chose pour le rendre exceptionnel. Nous fabriquons de superbes tapis. Et nous adorons ça !',
-        ),
-        p(
-          'Et parce que tant de notre cœur et de notre âme sont investis dans nos produits, nous avons créé un nouveau nom pour eux. Le seul mot qui peut vraiment décrire nos tapis : FLOORWEAR®.',
-        ),
-      ],
-      en: [
-        p(
-          'Our philosophy: what drives us is an absolute determination to create something good. Something beautiful. Something new. Something different. Something we can be proud of. We simply want to do things differently — to be better, unusual, interesting — in small things and big ones.',
-        ),
-        p(
-          'So every detail matters. And making things by hand is key, because you have to feel something to make it exceptional. We make superb rugs. And we love it!',
-        ),
-        p(
-          'And because so much of our heart and soul goes into our products, we created a new name for them — the only word that can truly describe our rugs: FLOORWEAR®.',
-        ),
-      ],
-      it: [
-        p(
-          'La nostra filosofia: ciò che ci muove è la volontà assoluta di creare qualcosa di buono. Qualcosa di bello. Qualcosa di nuovo. Qualcosa di diverso. Qualcosa di cui essere orgogliosi. Vogliamo semplicemente fare le cose in modo diverso — essere migliori, insoliti, interessanti — nelle piccole come nelle grandi cose.',
-        ),
-        p(
-          'Per questo ogni dettaglio conta. E fare le cose a mano è fondamentale, perché bisogna sentire qualcosa per renderlo eccezionale. Realizziamo tappeti straordinari. E lo adoriamo!',
-        ),
-        p(
-          'E poiché mettiamo così tanto cuore e anima nei nostri prodotti, abbiamo creato un nuovo nome per loro, l’unica parola che può davvero descrivere i nostri tappeti: FLOORWEAR®.',
-        ),
-      ],
-    },
-  } satisfies LegacyBrand,
 }
 
 export type LegacyRange = {

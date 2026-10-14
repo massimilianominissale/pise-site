@@ -1,5 +1,5 @@
 import { a, h2, h3, p, type RichNode, toLexical } from '../rich'
-import type { Locale, T } from './brands'
+import type { LegacyImage, Locale, T } from './brands'
 
 /**
  * Coordonnées, réseaux sociaux et pages de l'agence repris de l'ancien site :
@@ -32,14 +32,47 @@ export const LEGACY_SHOWROOM = {
 
 /* ---------- Pages ---------- */
 
-type Link = { type: 'external'; url: string; label: string; newTab: false }
-const link = (url: string, label: string): Link => ({ type: 'external', url, label, newTab: false })
+export type Link = { type: 'external'; url: string; label: string; newTab: boolean }
+/** Lien vers une rubrique du site (adresse française, traduite à l'affichage). */
+export const link = (url: string, label: string): Link => ({
+  type: 'external',
+  url,
+  label,
+  newTab: false,
+})
+/** Lien vers un autre site, ouvert dans un nouvel onglet. */
+export const outLink = (url: string, label: string): Link => ({
+  type: 'external',
+  url,
+  label,
+  newTab: true,
+})
 
 export type LegacyBlock =
   | { blockType: 'hero'; eyebrow?: string; title: string; lead?: string; cta?: Link }
   | { blockType: 'content'; body: ReturnType<typeof toLexical> }
+  | {
+      blockType: 'mediaText'
+      /** Photo importée au moment de créer la page (identifiant commun aux trois langues). */
+      image: LegacyImage
+      imagePosition: 'left' | 'right'
+      title: string
+      body: ReturnType<typeof toLexical>
+      cta?: Link
+    }
   | { blockType: 'cta'; title: string; text?: string; links: { link: Link }[] }
   | { blockType: 'events'; title: string; period: 'upcoming' | 'past' }
+
+/** Photo de l'équipe (maquettes) : page L'équipe et bloc « Parlons de votre projet » de l'accueil. */
+export const TEAM_PHOTO: LegacyImage = {
+  file: 'pise-equipe.jpg',
+  repo: true,
+  alt: {
+    fr: 'L’équipe de l’Agence PISE autour d’une table de réunion',
+    en: 'The Agence PISE team around a meeting table',
+    it: 'Il team dell’Agence PISE intorno a un tavolo riunioni',
+  },
+}
 
 export type LegacyPage = {
   key: string
@@ -451,18 +484,24 @@ export const LEGACY_PAGES: LegacyPage[] = [
         }),
       },
       {
-        blockType: 'cta',
+        blockType: 'mediaText',
+        image: TEAM_PHOTO,
+        imagePosition: 'left',
         title: pick(l, {
           fr: 'Le mieux, c’est d’en parler ensemble !',
           en: 'The best thing is to talk it through together!',
           it: 'La cosa migliore è parlarne insieme!',
         }),
-        text: pick(l, {
-          fr: 'Ça tombe bien, nous sommes près de chez vous…',
-          en: 'Good news: we’re close to you…',
-          it: 'Per fortuna siamo vicini a voi…',
-        }),
-        links: [{ link: link('/rendez-vous', BOOK[l]) }],
+        body: toLexical([
+          p(
+            pick(l, {
+              fr: 'Ça tombe bien, nous sommes près de chez vous…',
+              en: 'Good news: we’re close to you…',
+              it: 'Per fortuna siamo vicini a voi…',
+            }),
+          ),
+        ]),
+        cta: link('/rendez-vous', BOOK[l]),
       },
     ],
   },

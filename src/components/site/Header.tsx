@@ -6,6 +6,7 @@ import type { Dictionary } from '@/i18n/dictionary'
 import { resolveLink } from '@/lib/links'
 import type { Navigation } from '@/payload-types'
 
+import { LanguageSwitcher } from './LanguageSwitcher'
 import { MobileMenu } from './MobileMenu'
 import { type NavItem, NavLinks } from './NavLinks'
 
@@ -17,7 +18,7 @@ type Props = {
   account?: { initials: string; company: string } | null
 }
 
-/** En-tête collant : logo, menu (back-office › Navigation), espace pro et rendez-vous. */
+/** En-tête collant : logo, menu (back-office › Navigation), langues, espace pro et rendez-vous. */
 export function Header({ locale, dict, navigation, account }: Props) {
   const items: NavItem[] = (navigation?.items ?? [])
     .map((item) => resolveLink(item.link, locale))
@@ -47,6 +48,7 @@ export function Header({ locale, dict, navigation, account }: Props) {
           <NavLinks items={items} className="pise-nav" />
         </nav>
         <div className="site-header__actions">
+          <LanguageSwitcher locale={locale} label={dict.language} className="site-header__lang" />
           {account ? (
             <Link
               className="site-header__account"
