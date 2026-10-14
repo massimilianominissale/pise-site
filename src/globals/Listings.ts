@@ -62,6 +62,7 @@ export const Listings: GlobalConfig = {
             ],
           },
         ]),
+        section('products', 'Produits', 'Products'),
         section('projects', 'Réalisations', 'Projects'),
         section('tours', 'Espaces virtuels', 'Virtual spaces'),
         section('news', 'Actualités', 'News'),

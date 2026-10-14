@@ -2,11 +2,21 @@ import 'server-only'
 
 import config from '@payload-config'
 import { draftMode } from 'next/headers'
-import { getPayload } from 'payload'
+import { getPayload, type Where } from 'payload'
 import { cache } from 'react'
 
 import type { Locale } from '@/i18n/config'
-import type { Brand, Footer, Home, Listing, Navigation, Setting } from '@/payload-types'
+import type {
+  Brand,
+  Document,
+  Footer,
+  Home,
+  Listing,
+  Navigation,
+  Product,
+  Range,
+  Setting,
+} from '@/payload-types'
 
 /** Client Payload partagé (API locale : lecture directe en base, sans appel réseau). */
 export const getPayloadClient = cache(async () => getPayload({ config }))
@@ -220,4 +230,168 @@ export const getActiveAnnouncement = cache(async (locale: Locale) => {
     },
   })
   return docs[0] ?? null
+})
+
+/* ---------- Catalogue ---------- */
+
+/** Ce que les cartes et fiches affichent des fabricants et collections liés. */
+const catalogPopulate = {
+  brands: { name: true, slug: true, referent: true },
+  ranges: { name: true, slug: true, brand: true },
+  'product-categories': { name: true, slug: true },
+  sectors: { name: true, slug: true },
+} as const
+
+const publishedUnlessDraft = (draft: boolean, ...conditions: Where[]): Where => ({
+  and: [...conditions, ...(draft ? [] : [{ _status: { equals: 'published' } } as Where])],
+})
+
+export const getProductBySlug = cache(async (slug: string, locale: Locale) => {
+  const payload = await getPayloadClient()
+  const draft = await isDraft()
+  const { docs } = await payload.find({
+    collection: 'products',
+    locale,
+    draft,
+    depth: 2,
+    limit: 1,
+    populate: {
+      ...catalogPopulate,
+      // Les documents sont relus avec les droits du public (voir getPublicDocuments).
+      documents: { title: true },
+      products: {
+        name: true,
+        slug: true,
+        brand: true,
+        range: true,
+        images: true,
+        _status: true,
+      },
+    },
+    where: publishedUnlessDraft(draft, { slug: { equals: slug } }),
+  })
+  return (docs[0] as Product | undefined) ?? null
+})
+
+/** Produit par sa référence (lien permanent /p/[référence]), insensible à la casse. */
+export const getProductByReference = cache(async (reference: string) => {
+  const payload = await getPayloadClient()
+  for (const candidate of new Set([reference, reference.toUpperCase()])) {
+    const { docs } = await payload.find({
+      collection: 'products',
+      depth: 0,
+      limit: 1,
+      select: { slug: true, reference: true },
+      where: publishedUnlessDraft(false, { reference: { equals: candidate } }),
+    })
+    if (docs[0]) return docs[0]
+  }
+  return null
+})
+
+/** Documents d'une fiche, filtrés par les droits d'un visiteur anonyme (les documents pro restent cachés). */
+export const getPublicDocuments = cache(async (ids: number[], locale: Locale) => {
+  if (!ids.length) return []
+  const payload = await getPayloadClient()
+  const { docs } = await payload.find({
+    collection: 'documents',
+    locale,
+    depth: 0,
+    limit: ids.length,
+    overrideAccess: false,
+    where: { id: { in: ids } },
+  })
+  // Ordre choisi dans le back-office.
+  return ids.map((id) => docs.find((d) => d.id === id)).filter((d): d is Document => Boolean(d))
+})
+
+export type ProductFilters = { brand?: string; category?: string; page?: number }
+
+export const PRODUCTS_PER_PAGE = 24
+
+export const getProducts = cache(
+  async (locale: Locale, { brand, category, page = 1 }: ProductFilters = {}) => {
+    const payload = await getPayloadClient()
+    const conditions: Where[] = []
+    if (brand) conditions.push({ 'brand.slug': { equals: brand } })
+    if (category) conditions.push({ 'categories.slug': { equals: category } })
+    const result = await payload.find({
+      collection: 'products',
+      locale,
+      depth: 1,
+      limit: PRODUCTS_PER_PAGE,
+      page,
+      sort: ['-featured', 'name'],
+      populate: catalogPopulate,
+      where: publishedUnlessDraft(false, ...conditions),
+    })
+    return result
+  },
+)
+
+/** Catégories et fabricants qui ont au moins un produit publié (pour les filtres du catalogue). */
+export const getCatalogFacets = cache(async (locale: Locale) => {
+  const payload = await getPayloadClient()
+  const { docs } = await payload.find({
+    collection: 'products',
+    locale,
+    depth: 1,
+    limit: 1000,
+    pagination: false,
+    select: { brand: true, categories: true },
+    populate: catalogPopulate,
+    where: publishedUnlessDraft(false),
+  })
+  const brands = new Map<string, { slug: string; name: string }>()
+  const categories = new Map<string, { slug: string; name: string; order: number }>()
+  for (const doc of docs) {
+    const b = doc.brand
+    if (b && typeof b === 'object' && b.slug) brands.set(b.slug, { slug: b.slug, name: b.name })
+    for (const c of doc.categories ?? []) {
+      if (c && typeof c === 'object' && c.slug) {
+        categories.set(c.slug, { slug: c.slug, name: c.name, order: c.order ?? 0 })
+      }
+    }
+  }
+  return {
+    brands: [...brands.values()].sort((a, b) => a.name.localeCompare(b.name, locale)),
+    categories: [...categories.values()].sort((a, b) => a.order - b.order),
+  }
+})
+
+export const getRange = cache(async (brandSlug: string, rangeSlug: string, locale: Locale) => {
+  const payload = await getPayloadClient()
+  const draft = await isDraft()
+  const brand = await getBrandBySlug(brandSlug, locale)
+  if (!brand) return null
+  const { docs } = await payload.find({
+    collection: 'ranges',
+    locale,
+    draft,
+    depth: 1,
+    limit: 1,
+    joins: false,
+    populate: catalogPopulate,
+    where: publishedUnlessDraft(
+      draft,
+      { brand: { equals: brand.id } },
+      { slug: { equals: rangeSlug } },
+    ),
+  })
+  const range = (docs[0] as Range | undefined) ?? null
+  return range ? { range, brand } : null
+})
+
+export const getProductsOfRange = cache(async (rangeId: number, locale: Locale) => {
+  const payload = await getPayloadClient()
+  const { docs } = await payload.find({
+    collection: 'products',
+    locale,
+    depth: 1,
+    limit: 100,
+    sort: ['-featured', 'name'],
+    populate: catalogPopulate,
+    where: publishedUnlessDraft(false, { range: { equals: rangeId } }),
+  })
+  return docs
 })

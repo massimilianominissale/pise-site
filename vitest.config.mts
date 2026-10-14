@@ -8,5 +8,9 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
     include: ['tests/int/**/*.int.spec.ts'],
+    // Les suites partagent la base locale : une à la fois, avec le temps de démarrer Payload.
+    fileParallelism: false,
+    hookTimeout: 60_000,
+    testTimeout: 30_000,
   },
 })

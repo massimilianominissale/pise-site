@@ -2578,6 +2578,11 @@ export interface Listing {
       image?: (number | null) | Media;
     };
   };
+  products?: {
+    title?: string | null;
+    lead?: string | null;
+    image?: (number | null) | Media;
+  };
   projects?: {
     title?: string | null;
     lead?: string | null;
@@ -2864,6 +2869,13 @@ export interface ListingsSelect<T extends boolean = true> {
               text?: T;
               image?: T;
             };
+      };
+  products?:
+    | T
+    | {
+        title?: T;
+        lead?: T;
+        image?: T;
       };
   projects?:
     | T

@@ -8,6 +8,14 @@ export const asMedia = (value: unknown): Media | null =>
     ? (value as Media)
     : null
 
+/**
+ * Quand l'adresse du site est renseignée, Payload renvoie des adresses absolues : on les rend
+ * relatives pour que l'optimiseur d'images lise le fichier sur le même serveur.
+ */
+const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL?.replace(/\/$/, '')
+const localSrc = (url: string) =>
+  SERVER_URL && url.startsWith(`${SERVER_URL}/`) ? url.slice(SERVER_URL.length) : url
+
 type Props = {
   media: unknown
   /** Largeurs d'affichage, pour que le navigateur charge la bonne taille. */
@@ -29,7 +37,7 @@ export function Img({ media, sizes, className, priority, alt }: Props) {
     image.focalX != null && image.focalY != null ? `${image.focalX}% ${image.focalY}%` : undefined
   return (
     <Image
-      src={image.url}
+      src={localSrc(image.url)}
       alt={alt ?? image.alt ?? ''}
       fill
       sizes={sizes}

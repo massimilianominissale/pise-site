@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { BrandCard } from '@/components/brands/BrandCard'
+import { ProductCard } from '@/components/products/ProductCard'
 import { PlayIcon, ProjectCard } from '@/components/cards'
 import { Img, asMedia } from '@/components/ui/Img'
 import { JsonLd } from '@/components/ui/JsonLd'
@@ -222,20 +223,9 @@ export default async function BrandPage({ params }: Props) {
             ) : null}
           </div>
           <div className="product-grid">
-            {products.docs.map((product) => {
-              const range = product.range && typeof product.range === 'object' ? product.range : null
-              return (
-                <Link key={product.id} className="pise-product" href={docHref(locale, 'products', product) ?? '#'}>
-                  <div className="pise-product__visual">
-                    <Img media={product.images?.[0]} sizes="(min-width: 1100px) 25vw, 50vw" />
-                  </div>
-                  <div className="pise-product__meta">
-                    {range ? <span className="pise-eyebrow pise-product__brand">{range.name}</span> : null}
-                    <span className="pise-product__name">{product.name}</span>
-                  </div>
-                </Link>
-              )
-            })}
+            {products.docs.map((product) => (
+              <ProductCard key={product.id} product={product} locale={locale} eyebrow="range" />
+            ))}
           </div>
         </section>
       ) : null}

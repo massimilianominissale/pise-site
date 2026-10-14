@@ -52,3 +52,7 @@ node_modules/
 # fichiers téléversés en local (sans Vercel Blob)
 /media
 /documents
+
+# Consignes générées par next dev pour les agents de code
+/AGENTS.md
+/CLAUDE.md

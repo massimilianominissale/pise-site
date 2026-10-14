@@ -218,13 +218,37 @@ describe('Catalogue', () => {
   it('la référence produit est unique et l’identifiant d’URL est calculé', async () => {
     const product = await payload.create({
       collection: 'products',
-      data: { name: 'Net Lounge', reference: `NET-${stamp}`, brand: brandId, _status: 'published' },
+      data: {
+        name: `Net Lounge ${stamp}`,
+        reference: `NET-${stamp}`,
+        brand: brandId,
+        _status: 'published',
+      },
     })
-    expect(product.slug).toBe('net-lounge')
+    expect(product.slug).toBe(`net-lounge-${stamp}`)
     await expect(
       payload.create({
         collection: 'products',
         data: { name: 'Autre', reference: `NET-${stamp}`, brand: brandId },
+      }),
+    ).rejects.toThrow()
+  })
+
+  it('un nom déjà pris donne un identifiant suffixé, un identifiant saisi en double est refusé', async () => {
+    const twin = await payload.create({
+      collection: 'products',
+      data: { name: `Net Lounge ${stamp}`, reference: `NET2-${stamp}`, brand: brandId },
+    })
+    expect(twin.slug).toBe(`net-lounge-${stamp}-2`)
+    await expect(
+      payload.create({
+        collection: 'products',
+        data: {
+          name: 'Autre',
+          slug: `net-lounge-${stamp}`,
+          reference: `NET3-${stamp}`,
+          brand: brandId,
+        },
       }),
     ).rejects.toThrow()
   })
