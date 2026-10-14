@@ -120,7 +120,11 @@ export default async function CatalogPage({ params, searchParams }: Props) {
                 label={t.brand}
                 value={brand ?? ''}
                 options={[
-                  { value: '', label: t.allBrands, href: hrefWith({ fabricant: undefined, page: undefined }) },
+                  {
+                    value: '',
+                    label: t.allBrands,
+                    href: hrefWith({ fabricant: undefined, page: undefined }),
+                  },
                   ...facets.brands.map((b) => ({
                     value: b.slug,
                     label: b.name,
@@ -155,13 +159,18 @@ export default async function CatalogPage({ params, searchParams }: Props) {
         {result.totalPages > 1 ? (
           <nav className="pagination" aria-label={t.pagination}>
             {result.hasPrevPage ? (
-              <Link className="pise-link pise-link--back" href={hrefWith({ page: String(page - 1) })}>
+              <Link
+                className="pise-link pise-link--back"
+                href={hrefWith({ page: String(page - 1) })}
+              >
                 {t.previous}
               </Link>
             ) : (
               <span />
             )}
-            <span className="cap">{t.page(page)} / {result.totalPages}</span>
+            <span className="cap">
+              {t.page(page)} / {result.totalPages}
+            </span>
             {result.hasNextPage ? (
               <Link className="pise-link" href={hrefWith({ page: String(page + 1) })}>
                 {t.next}

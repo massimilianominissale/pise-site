@@ -103,7 +103,17 @@ export const VirtualTours: CollectionConfig = {
               localized: true,
               required: true,
             },
-            { name: 'sceneId', label: l('Identifiant de scène', 'Scene ID'), type: 'text' },
+            {
+              name: 'sceneId',
+              label: l('Lien direct vers la pièce', 'Direct link to the room'),
+              type: 'text',
+              admin: {
+                description: l(
+                  'Adresse https de la pièce fournie par IMRSIVO (même domaine que la visite).',
+                  'https address of the room provided by IMRSIVO (same domain as the tour).',
+                ),
+              },
+            },
           ],
         },
       ],

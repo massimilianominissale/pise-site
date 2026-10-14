@@ -653,6 +653,9 @@ export interface VirtualTour {
   rooms?:
     | {
         label: string;
+        /**
+         * https address of the room provided by IMRSIVO (same domain as the tour).
+         */
         sceneId?: string | null;
         id?: string | null;
       }[]

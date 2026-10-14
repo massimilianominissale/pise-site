@@ -37,3 +37,12 @@ export const ogImages = (...candidates: unknown[]) => {
   }
   return undefined
 }
+
+/** Balises canonique et hreflang d'une page dont l'adresse diffère par langue (identifiant traduit). */
+export const localizedAlternates = (
+  locale: Locale,
+  paths: Record<Locale, string>,
+): Metadata['alternates'] => ({
+  canonical: paths[locale],
+  languages: { ...paths, 'x-default': paths.fr },
+})

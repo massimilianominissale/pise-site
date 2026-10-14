@@ -5,7 +5,7 @@ import { draftMode } from 'next/headers'
 import { getPayload, type Where } from 'payload'
 import { cache } from 'react'
 
-import type { Locale } from '@/i18n/config'
+import { DEFAULT_LOCALE, type Locale, LOCALES } from '@/i18n/config'
 import type {
   Brand,
   Document,
@@ -14,8 +14,10 @@ import type {
   Listing,
   Navigation,
   Product,
+  Project,
   Range,
   Setting,
+  VirtualTour,
 } from '@/payload-types'
 
 /** Client Payload partagé (API locale : lecture directe en base, sans appel réseau). */
@@ -394,4 +396,234 @@ export const getProductsOfRange = cache(async (rangeId: number, locale: Locale) 
     where: publishedUnlessDraft(false, { range: { equals: rangeId } }),
   })
   return docs
+})
+
+/* ---------- Documents à identifiant traduit ---------- */
+
+/**
+ * Document dont l'identifiant d'URL est traduit (réalisations, visites, actualités, pages) :
+ * cherché dans la langue demandée, puis dans les autres, pour qu'un lien copié depuis une autre
+ * langue (ou le sélecteur de langue) retrouve la page. La page redirige ensuite vers le bon slug.
+ */
+const findLocalized = async <T extends { id: number }>(
+  locale: Locale,
+  find: (l: Locale) => Promise<T | undefined>,
+  byId: (id: number) => Promise<T>,
+): Promise<T | null> => {
+  const direct = await find(locale)
+  if (direct) return direct
+  for (const other of LOCALES) {
+    if (other === locale) continue
+    const found = await find(other)
+    if (found) return byId(found.id)
+  }
+  return null
+}
+
+type LocalizedSlugCollection = 'projects' | 'virtual-tours' | 'posts' | 'pages' | 'events'
+
+/** Identifiant d'URL d'un document dans chaque langue (balises hreflang). */
+export const getLocalizedSlugs = cache(
+  async (
+    collection: LocalizedSlugCollection,
+    id: number,
+  ): Promise<Record<Locale, string | null>> => {
+    const payload = await getPayloadClient()
+    const doc = (await payload.findByID({
+      collection,
+      id,
+      locale: 'all',
+      depth: 0,
+    })) as unknown as {
+      slug?: Partial<Record<Locale, string | null>> | string | null
+    }
+    const slug = doc.slug
+    const pick = (l: Locale) =>
+      slug && typeof slug === 'object' ? (slug[l] ?? slug[DEFAULT_LOCALE] ?? null) : (slug ?? null)
+    return { fr: pick('fr'), en: pick('en'), it: pick('it') }
+  },
+)
+
+/* ---------- Réalisations ---------- */
+
+export type ProjectFilters = { sector?: string; brand?: string; region?: string; page?: number }
+
+export const PROJECTS_PER_PAGE = 9
+
+const projectPopulate = {
+  brands: { name: true, slug: true },
+  sectors: { name: true, slug: true },
+  products: { name: true, slug: true, brand: true, range: true, images: true, _status: true },
+  'virtual-tours': {
+    title: true,
+    slug: true,
+    kind: true,
+    thumbnail: true,
+    availability: true,
+    location: true,
+    summary: true,
+    credit: true,
+  },
+} as const
+
+/** Réalisations publiées ; « Voir plus » agrandit la liste (page 2 = 18 projets). */
+export const getProjectsList = cache(
+  async (locale: Locale, { sector, brand, region, page = 1 }: ProjectFilters = {}) => {
+    const payload = await getPayloadClient()
+    const conditions: Where[] = []
+    if (sector) conditions.push({ 'sectors.slug': { equals: sector } })
+    if (brand) conditions.push({ 'brands.slug': { equals: brand } })
+    if (region) conditions.push({ region: { equals: region } })
+    return payload.find({
+      collection: 'projects',
+      locale,
+      depth: 1,
+      limit: PROJECTS_PER_PAGE * page,
+      // Projet à la une d'abord, puis l'ordre choisi, puis les plus récents.
+      sort: ['-featured', 'order', '-year', '-createdAt'],
+      populate: projectPopulate,
+      where: publishedUnlessDraft(false, ...conditions),
+    })
+  },
+)
+
+/** Secteurs, fabricants et régions présents dans les réalisations publiées (filtres). */
+export const getProjectFacets = cache(async (locale: Locale) => {
+  const payload = await getPayloadClient()
+  const { docs } = await payload.find({
+    collection: 'projects',
+    locale,
+    depth: 1,
+    pagination: false,
+    select: { sectors: true, brands: true, region: true, featured: true },
+    populate: projectPopulate,
+    where: publishedUnlessDraft(false),
+  })
+  const sectors = new Map<string, { slug: string; name: string; order: number }>()
+  const brands = new Map<string, { slug: string; name: string }>()
+  const regions = new Set<string>()
+  for (const doc of docs) {
+    for (const s of doc.sectors ?? []) {
+      if (s && typeof s === 'object' && s.slug)
+        sectors.set(s.slug, { slug: s.slug, name: s.name, order: s.order ?? 0 })
+    }
+    for (const b of doc.brands ?? []) {
+      if (b && typeof b === 'object' && b.slug) brands.set(b.slug, { slug: b.slug, name: b.name })
+    }
+    if (doc.region) regions.add(doc.region)
+  }
+  return {
+    sectors: [...sectors.values()].sort((a, b) => a.order - b.order),
+    brands: [...brands.values()].sort((a, b) => a.name.localeCompare(b.name, locale)),
+    regions: [...regions].sort((a, b) => a.localeCompare(b, locale)),
+  }
+})
+
+export const getProjectBySlug = cache(async (slug: string, locale: Locale) => {
+  const payload = await getPayloadClient()
+  const draft = await isDraft()
+  const options = {
+    collection: 'projects' as const,
+    draft,
+    depth: 2,
+    populate: {
+      ...projectPopulate,
+      ...catalogPopulate,
+      brands: {
+        name: true,
+        slug: true,
+        cardImage: true,
+        heroImage: true,
+        universes: true,
+        country: true,
+        sectors: true,
+        tagline: true,
+      },
+    } as const,
+  }
+  return findLocalized<Project>(
+    locale,
+    async (l) =>
+      (
+        await payload.find({
+          ...options,
+          locale: l,
+          limit: 1,
+          where: publishedUnlessDraft(draft, { slug: { equals: slug } }),
+        })
+      ).docs[0] as Project | undefined,
+    async (id) => (await payload.findByID({ ...options, id, locale })) as Project,
+  )
+})
+
+/* ---------- Espaces virtuels ---------- */
+
+export const getAllVirtualTours = cache(async (locale: Locale) => {
+  const payload = await getPayloadClient()
+  const { docs } = await payload.find({
+    collection: 'virtual-tours',
+    locale,
+    depth: 1,
+    pagination: false,
+    sort: ['order', '-createdAt'],
+    populate: { brands: { name: true, slug: true } },
+    where: publishedUnlessDraft(false),
+  })
+  return docs
+})
+
+export const getTourBySlug = cache(async (slug: string, locale: Locale) => {
+  const payload = await getPayloadClient()
+  const draft = await isDraft()
+  const options = {
+    collection: 'virtual-tours' as const,
+    draft,
+    depth: 2,
+    populate: {
+      ...catalogPopulate,
+      products: { name: true, slug: true, brand: true, range: true, images: true, _status: true },
+    } as const,
+  }
+  return findLocalized<VirtualTour>(
+    locale,
+    async (l) =>
+      (
+        await payload.find({
+          ...options,
+          locale: l,
+          limit: 1,
+          where: publishedUnlessDraft(draft, { slug: { equals: slug } }),
+        })
+      ).docs[0] as VirtualTour | undefined,
+    async (id) => (await payload.findByID({ ...options, id, locale })) as VirtualTour,
+  )
+})
+
+/** Réalisations liées à une visite (pour la page de la visite). */
+export const getProjectsOfTour = cache(async (tourId: number, locale: Locale) => {
+  const payload = await getPayloadClient()
+  const { docs } = await payload.find({
+    collection: 'projects',
+    locale,
+    depth: 1,
+    limit: 3,
+    populate: projectPopulate,
+    where: publishedUnlessDraft(false, { virtualTour: { equals: tourId } }),
+  })
+  return docs
+})
+
+/* ---------- Intégrations ---------- */
+
+/** Réglages des outils intégrés (lecture serveur : le global n'est pas public). */
+export const getIntegrations = cache(async () => {
+  const payload = await getPayloadClient()
+  const doc = await payload.findGlobal({ slug: 'integrations', depth: 0 })
+  return {
+    mobilia: {
+      enabled: Boolean(doc.mobilia?.enabled && doc.mobilia?.embedUrl),
+      embedUrl: doc.mobilia?.embedUrl ?? null,
+    },
+    frameOrigins: (doc.frameOrigins ?? []).filter(Boolean) as string[],
+  }
 })

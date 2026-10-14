@@ -4,7 +4,11 @@ import { notFound } from 'next/navigation'
 
 import { CopyButton } from '@/components/products/CopyButton'
 import { ProductCard } from '@/components/products/ProductCard'
-import { ProductShowcase, type ShowcaseFinish, type ShowcaseSlide } from '@/components/products/ProductShowcase'
+import {
+  ProductShowcase,
+  type ShowcaseFinish,
+  type ShowcaseSlide,
+} from '@/components/products/ProductShowcase'
 import { Img, asMedia } from '@/components/ui/Img'
 import { JsonLd } from '@/components/ui/JsonLd'
 import { RichText } from '@/components/ui/RichText'
@@ -14,11 +18,20 @@ import { formatFile } from '@/lib/format'
 import { docHref } from '@/lib/links'
 import { getProductBySlug, getProductsOfBrand, getPublicDocuments } from '@/lib/payload'
 import { alternates, ogImages, SITE_URL } from '@/lib/seo'
-import type { Brand, Faq, Media, Product, ProductCategory, Range, TeamMember } from '@/payload-types'
+import type {
+  Brand,
+  Faq,
+  Media,
+  Product,
+  ProductCategory,
+  Range,
+  TeamMember,
+} from '@/payload-types'
 
 type Props = { params: Promise<{ locale: string; slug: string }> }
 
-const obj = <T,>(value: unknown): T | null => (value && typeof value === 'object' ? (value as T) : null)
+const obj = <T,>(value: unknown): T | null =>
+  value && typeof value === 'object' ? (value as T) : null
 
 const hasText = (rich: unknown) => !!rich && JSON.stringify(rich).includes('"text":"')
 
@@ -105,7 +118,12 @@ export default async function ProductPage({ params }: Props) {
   const finishes: ShowcaseFinish[] = (product.finishes ?? []).map((f, i) => {
     const image = asMedia(f.image)
     const slide = image ? images.findIndex((m) => m.id === image.id) : -1
-    return { id: f.id ?? String(i), name: f.name, swatch: f.swatch ?? null, slide: slide >= 0 ? slide : null }
+    return {
+      id: f.id ?? String(i),
+      name: f.name,
+      swatch: f.swatch ?? null,
+      slide: slide >= 0 ? slide : null,
+    }
   })
 
   const slides: ShowcaseSlide[] = images.map((m, i) => {
@@ -161,10 +179,37 @@ export default async function ProductPage({ params }: Props) {
             {
               '@type': 'BreadcrumbList',
               itemListElement: [
-                { '@type': 'ListItem', position: 1, name: dict.brands.listTitle, item: `${SITE_URL}${localizedPath(locale, 'brands')}` },
-                ...(brand && brandHref ? [{ '@type': 'ListItem', position: 2, name: brand.name, item: `${SITE_URL}${brandHref}` }] : []),
-                ...(range && rangeHref ? [{ '@type': 'ListItem', position: 3, name: range.name, item: `${SITE_URL}${rangeHref}` }] : []),
-                { '@type': 'ListItem', position: 2 + (brand ? 1 : 0) + (range ? 1 : 0), name: product.name },
+                {
+                  '@type': 'ListItem',
+                  position: 1,
+                  name: dict.brands.listTitle,
+                  item: `${SITE_URL}${localizedPath(locale, 'brands')}`,
+                },
+                ...(brand && brandHref
+                  ? [
+                      {
+                        '@type': 'ListItem',
+                        position: 2,
+                        name: brand.name,
+                        item: `${SITE_URL}${brandHref}`,
+                      },
+                    ]
+                  : []),
+                ...(range && rangeHref
+                  ? [
+                      {
+                        '@type': 'ListItem',
+                        position: 3,
+                        name: range.name,
+                        item: `${SITE_URL}${rangeHref}`,
+                      },
+                    ]
+                  : []),
+                {
+                  '@type': 'ListItem',
+                  position: 2 + (brand ? 1 : 0) + (range ? 1 : 0),
+                  name: product.name,
+                },
               ],
             },
             {
@@ -231,11 +276,15 @@ export default async function ProductPage({ params }: Props) {
             <div className="pv__head">
               {brand ? (
                 <Link className="pise-eyebrow pv__brand" href={brandHref ?? '#'}>
-                  {[brand.name, range ? t.collection(range.name) : null].filter(Boolean).join(' · ')}
+                  {[brand.name, range ? t.collection(range.name) : null]
+                    .filter(Boolean)
+                    .join(' · ')}
                 </Link>
               ) : null}
               <h1 className="pv__title">{product.name}</h1>
-              {product.shortDescription ? <p className="body pv__lead">{product.shortDescription}</p> : null}
+              {product.shortDescription ? (
+                <p className="body pv__lead">{product.shortDescription}</p>
+              ) : null}
               <div className="kv">
                 <span>{t.reference}</span>
                 <span>{product.reference}</span>
@@ -248,7 +297,10 @@ export default async function ProductPage({ params }: Props) {
                 <Link className="pise-btn pv__quote" href={quoteHref}>
                   {t.quote}
                 </Link>
-                <Link className="pise-btn pise-btn--outline" href={localizedPath(locale, 'generator')}>
+                <Link
+                  className="pise-btn pise-btn--outline"
+                  href={localizedPath(locale, 'generator')}
+                >
                   {t.seeInGenerator}
                 </Link>
               </div>
@@ -262,7 +314,12 @@ export default async function ProductPage({ params }: Props) {
                 <span className="cap">
                   {t.permalink} : {permalinkLabel}
                 </span>
-                <CopyButton className="pise-chip pise-chip--small" value={permalink} label={t.copy} doneLabel={t.copied} />
+                <CopyButton
+                  className="pise-chip pise-chip--small"
+                  value={permalink}
+                  label={t.copy}
+                  doneLabel={t.copied}
+                />
               </div>
             </>
           }
@@ -274,7 +331,11 @@ export default async function ProductPage({ params }: Props) {
               <div className="product-details__specs">
                 <h2 className="sec-title">{t.specs}</h2>
                 {hasText(product.description) ? (
-                  <RichText data={product.description} locale={locale} className="body product-details__text" />
+                  <RichText
+                    data={product.description}
+                    locale={locale}
+                    className="body product-details__text"
+                  />
                 ) : null}
                 {specs.length ? (
                   <dl className="spec">
@@ -293,7 +354,9 @@ export default async function ProductPage({ params }: Props) {
                     <h2 className="h2">{t.documents}</h2>
                     <ul className="doc-list">
                       {documents.map((doc) => {
-                        const ext = (doc.filename?.split('.').pop() ?? 'pdf').toUpperCase().slice(0, 4)
+                        const ext = (doc.filename?.split('.').pop() ?? 'pdf')
+                          .toUpperCase()
+                          .slice(0, 4)
                         return (
                           <li key={doc.id}>
                             <a className="doc-row" href={doc.url ?? '#'} download>
@@ -301,7 +364,9 @@ export default async function ProductPage({ params }: Props) {
                                 {ext}
                               </span>
                               <span className="doc-row__name">{doc.title}</span>
-                              <span className="cap">{formatFile(locale, doc.mimeType, doc.filesize)}</span>
+                              <span className="cap">
+                                {formatFile(locale, doc.mimeType, doc.filesize)}
+                              </span>
                             </a>
                           </li>
                         )
@@ -323,10 +388,20 @@ export default async function ProductPage({ params }: Props) {
         ) : null}
 
         {ambiance.length ? (
-          <section className={`product-ambiance${ambiance.length === 1 ? ' product-ambiance--single' : ''}`}>
+          <section
+            className={`product-ambiance${ambiance.length === 1 ? ' product-ambiance--single' : ''}`}
+          >
             {ambiance.map((m, i) => (
-              <div key={m.id} className={`product-ambiance__img product-ambiance__img--${i === 0 ? 'a' : 'b'}`}>
-                <Img media={m} sizes={i === 0 ? '(min-width: 768px) 42vw, 50vw' : '(min-width: 768px) 58vw, 50vw'} />
+              <div
+                key={m.id}
+                className={`product-ambiance__img product-ambiance__img--${i === 0 ? 'a' : 'b'}`}
+              >
+                <Img
+                  media={m}
+                  sizes={
+                    i === 0 ? '(min-width: 768px) 42vw, 50vw' : '(min-width: 768px) 58vw, 50vw'
+                  }
+                />
               </div>
             ))}
           </section>
@@ -393,7 +468,9 @@ export default async function ProductPage({ params }: Props) {
               </span>
               <span className="h3">{referent ? referent.name : t.contactTitle}</span>
               {referent ? (
-                <span className="cap">{[referent.zone, referent.phone].filter(Boolean).join(' · ')}</span>
+                <span className="cap">
+                  {[referent.zone, referent.phone].filter(Boolean).join(' · ')}
+                </span>
               ) : null}
             </div>
             <div className="product-referent__actions">
@@ -418,7 +495,15 @@ export default async function ProductPage({ params }: Props) {
             doneLabel={t.copied}
             share={{ title: product.name }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              aria-hidden="true"
+            >
               <path d="M7 17 17 7M9 7h8v8" />
             </svg>
           </CopyButton>
