@@ -10,6 +10,7 @@ import * as migration_20261014_171107_liste_de_salons from './20261014_171107_li
 import * as migration_20261014_184812_ouverture_des_visites from './20261014_184812_ouverture_des_visites'
 import * as migration_20261014_200000_ancien_site from './20261014_200000_ancien_site'
 import * as migration_20261014_210000_imrsivo_et_accueil from './20261014_210000_imrsivo_et_accueil'
+import * as migration_20261014_220000_images_originales from './20261014_220000_images_originales'
 
 export const migrations = [
   {
@@ -71,5 +72,10 @@ export const migrations = [
     up: migration_20261014_210000_imrsivo_et_accueil.up,
     down: migration_20261014_210000_imrsivo_et_accueil.down,
     name: '20261014_210000_imrsivo_et_accueil',
+  },
+  {
+    up: migration_20261014_220000_images_originales.up,
+    down: migration_20261014_220000_images_originales.down,
+    name: '20261014_220000_images_originales',
   },
 ]

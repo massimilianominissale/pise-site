@@ -218,7 +218,10 @@ export default buildConfig({
       },
       token: process.env.BLOB_READ_WRITE_TOKEN || '',
       clientUploads: true,
-      addRandomSuffix: true,
+      // Pas de suffixe aléatoire : avec les tailles d'image, il renommait le document d'après la
+      // dernière taille envoyée (photo réduite affichée, tailles introuvables). Les envois depuis
+      // l'administration rangent déjà chaque fichier dans un dossier unique (`_objectKey`).
+      addRandomSuffix: false,
       // Même schéma de base avec ou sans jeton Blob (local, préversion, production).
       alwaysInsertFields: true,
     }),
