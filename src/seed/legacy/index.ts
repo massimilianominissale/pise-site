@@ -76,9 +76,9 @@ export const safeFileName = (file: string) =>
 export const fetchLegacyFile: FetchFile = async (file) => {
   const base = process.env.LEGACY_UPLOADS_URL || 'https://agencepise.fr/wp-content/uploads/'
   const url = base + file.split('/').map(encodeURIComponent).join('/')
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(30_000) })
+      const res = await fetch(url, { signal: AbortSignal.timeout(20_000) })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = Buffer.from(await res.arrayBuffer())
       const extension = file.split('.').pop()?.toLowerCase() ?? ''
@@ -86,13 +86,18 @@ export const fetchLegacyFile: FetchFile = async (file) => {
       const mimetype = type?.startsWith('image/') ? type : (MIME[extension] ?? 'image/jpeg')
       return { data, mimetype, name: safeFileName(file), size: data.length }
     } catch {
-      if (attempt < 3) await new Promise((r) => setTimeout(r, 1000 * attempt))
+      if (attempt < 2) await new Promise((r) => setTimeout(r, 1000))
     }
   }
   return null
 }
 
-type Run = Ctx & { media: Map<string, number | null>; report: LegacyReport }
+type Run = Ctx & {
+  media: Map<string, number | null>
+  report: LegacyReport
+  /** Échecs de téléchargement d'affilée : au-delà de 4, l'ancien site est considéré injoignable. */
+  failures: number
+}
 
 const uploadImage = async (run: Run, image: LegacyImage, brand?: number) => {
   const { payload, req } = run
@@ -109,7 +114,8 @@ const uploadImage = async (run: Run, image: LegacyImage, brand?: number) => {
     run.media.set(image.file, docs[0].id)
     return docs[0].id
   }
-  const file = await (run.fetchFile ?? fetchLegacyFile)(image.file)
+  const file = run.failures >= 4 ? null : await (run.fetchFile ?? fetchLegacyFile)(image.file)
+  run.failures = file ? 0 : run.failures + 1
   if (!file) {
     run.report.missingImages.push(image.file)
     run.media.set(image.file, null)
@@ -569,6 +575,7 @@ export const importLegacy = async (ctx: Ctx, content: LegacyContent = LEGACY) =>
   const run: Run = {
     ...ctx,
     media: new Map(),
+    failures: 0,
     report: { added: [], skipped: [], conflicts: [], missingImages: [] },
   }
   await importBrands(run, content)
