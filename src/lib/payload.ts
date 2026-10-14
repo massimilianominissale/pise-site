@@ -204,6 +204,42 @@ export const getUpcomingEvents = cache(async (locale: Locale, limit = 2) => {
   return docs
 })
 
+/** Salons publiés à venir (les plus proches d'abord) ou passés (les plus récents d'abord). */
+export const getEvents = cache(async (locale: Locale, period: 'upcoming' | 'past') => {
+  const payload = await getPayloadClient()
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const from = today.toISOString()
+  const { docs } = await payload.find({
+    collection: 'events',
+    locale,
+    depth: 1,
+    limit: 100,
+    sort: period === 'upcoming' ? 'startDate' : '-startDate',
+    where: {
+      and: [
+        { _status: { equals: 'published' } },
+        period === 'upcoming'
+          ? {
+              or: [
+                { endDate: { greater_than_equal: from } },
+                { startDate: { greater_than_equal: from } },
+              ],
+            }
+          : {
+              and: [
+                { startDate: { less_than: from } },
+                {
+                  or: [{ endDate: { exists: false } }, { endDate: { less_than: from } }],
+                },
+              ],
+            },
+      ],
+    },
+  })
+  return docs
+})
+
 export const getPublicDocumentsOfBrand = cache(async (brandId: number, locale: Locale) => {
   const payload = await getPayloadClient()
   const { docs } = await payload.find({

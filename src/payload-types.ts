@@ -1044,6 +1044,16 @@ export interface Page {
             blockName?: string | null;
             blockType: 'cta';
           }
+        | {
+            title?: string | null;
+            /**
+             * The block is hidden when no fair matches.
+             */
+            period?: ('upcoming' | 'past') | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'events';
+          }
       )[]
     | null;
   /**
@@ -1870,6 +1880,14 @@ export interface PagesSelect<T extends boolean = true> {
                         };
                     id?: T;
                   };
+              id?: T;
+              blockName?: T;
+            };
+        events?:
+          | T
+          | {
+              title?: T;
+              period?: T;
               id?: T;
               blockName?: T;
             };

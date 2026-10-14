@@ -6,6 +6,8 @@ import * as migration_20261013_200939_gabarits_socle from './20261013_200939_gab
 import * as migration_20261013_201500_contenus_de_depart from './20261013_201500_contenus_de_depart'
 import * as migration_20261014_041333_rubrique_produits from './20261014_041333_rubrique_produits'
 import * as migration_20261014_050000_produits_de_depart from './20261014_050000_produits_de_depart'
+import * as migration_20261014_171107_liste_de_salons from './20261014_171107_liste_de_salons'
+import * as migration_20261014_200000_ancien_site from './20261014_200000_ancien_site'
 
 export const migrations = [
   {
@@ -47,5 +49,15 @@ export const migrations = [
     up: migration_20261014_050000_produits_de_depart.up,
     down: migration_20261014_050000_produits_de_depart.down,
     name: '20261014_050000_produits_de_depart',
+  },
+  {
+    up: migration_20261014_171107_liste_de_salons.up,
+    down: migration_20261014_171107_liste_de_salons.down,
+    name: '20261014_171107_liste_de_salons',
+  },
+  {
+    up: migration_20261014_200000_ancien_site.up,
+    down: migration_20261014_200000_ancien_site.down,
+    name: '20261014_200000_ancien_site',
   },
 ]

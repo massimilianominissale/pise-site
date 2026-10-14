@@ -3,6 +3,8 @@ import type { NextConfig } from 'next'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
+import { legacyRedirects } from './src/lib/legacy-redirects'
+
 const __filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(__filename)
 
@@ -33,6 +35,10 @@ const nextConfig: NextConfig = {
   },
   turbopack: {
     root: path.resolve(dirname),
+  },
+  // Adresses de l'ancien site WordPress (agencepise.fr/index.php/…).
+  async redirects() {
+    return legacyRedirects()
   },
 }
 

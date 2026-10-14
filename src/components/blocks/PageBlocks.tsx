@@ -4,10 +4,14 @@ import { asMedia, Img } from '@/components/ui/Img'
 import { JsonLd } from '@/components/ui/JsonLd'
 import { RichText } from '@/components/ui/RichText'
 import type { Locale } from '@/i18n/config'
-import { type LinkValue, resolveLink } from '@/lib/links'
-import type { Faq, Media, Page } from '@/payload-types'
+import { formatDateRange } from '@/lib/format'
+import { docHref, type LinkValue, resolveLink } from '@/lib/links'
+import type { Event, Faq, Media, Page } from '@/payload-types'
 
 type Block = NonNullable<Page['layout']>[number]
+
+/** Salons chargés par la page pour les blocs « Liste de salons ». */
+export type PageEvents = { upcoming: Event[]; past: Event[] }
 
 const CtaLink = ({
   link,
@@ -44,11 +48,13 @@ export function PageBlocks({
   blocks,
   locale,
   crumb,
+  events = { upcoming: [], past: [] },
 }: {
   blocks: Block[]
   locale: Locale
   /** Fil d'Ariane, affiché dans l'en-tête de page. */
   crumb: React.ReactNode
+  events?: PageEvents
 }) {
   return (
     <>
@@ -184,6 +190,41 @@ export function PageBlocks({
                 </div>
               </section>
             )
+          case 'events': {
+            const list = block.period === 'past' ? events.past : events.upcoming
+            if (!list.length) return null
+            return (
+              <section key={key} className="container news block-events">
+                {block.title ? <h2 className="sec-title">{block.title}</h2> : null}
+                <div className="news__grid">
+                  {list.map((event) => {
+                    const place = [event.city, event.venue].filter(Boolean).join(' · ')
+                    return (
+                      <Link
+                        key={event.id}
+                        className="post-card"
+                        href={docHref(locale, 'events', event) ?? '#'}
+                      >
+                        <div className="post-card__img">
+                          <Img
+                            media={event.image}
+                            sizes="(min-width: 1100px) 33vw, (min-width: 768px) 50vw, 100vw"
+                          />
+                        </div>
+                        <div className="post-card__text">
+                          <span className="pise-eyebrow eyebrow-mute">
+                            {formatDateRange(locale, event.startDate, event.endDate)}
+                          </span>
+                          <span className="h3">{event.name}</span>
+                          {place ? <p className="body mute">{place}</p> : null}
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+              </section>
+            )
+          }
           default:
             return null
         }

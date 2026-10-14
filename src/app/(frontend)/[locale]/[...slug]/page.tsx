@@ -8,7 +8,7 @@ import { isLocale, type Locale, localizedPath, ROUTES } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionary'
 import { docHref } from '@/lib/links'
 import { localizedDocPaths, localizedPagePaths } from '@/lib/localized'
-import { getEventBySlug, getPageBySlug } from '@/lib/payload'
+import { getEventBySlug, getEvents, getPageBySlug } from '@/lib/payload'
 import { localizedAlternates, ogImages } from '@/lib/seo'
 import type { Page } from '@/payload-types'
 
@@ -102,6 +102,13 @@ export default async function CatchAll({ params }: Props) {
   )
   const blocks = page.layout ?? []
   const startsWithHero = blocks[0]?.blockType === 'hero'
+  const periods = new Set(
+    blocks.flatMap((b) => (b.blockType === 'events' ? [b.period ?? 'upcoming'] : [])),
+  )
+  const [upcoming, past] = await Promise.all([
+    periods.has('upcoming') ? getEvents(locale, 'upcoming') : [],
+    periods.has('past') ? getEvents(locale, 'past') : [],
+  ])
 
   return (
     <>
@@ -113,7 +120,7 @@ export default async function CatchAll({ params }: Props) {
           </div>
         </section>
       )}
-      <PageBlocks blocks={blocks} locale={locale} crumb={crumb} />
+      <PageBlocks blocks={blocks} locale={locale} crumb={crumb} events={{ upcoming, past }} />
     </>
   )
 }

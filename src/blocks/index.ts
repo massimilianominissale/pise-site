@@ -105,6 +105,35 @@ export const CtaBlock: Block = {
   ],
 }
 
+/** Liste des salons publiés (page « Salons » de l'agence). */
+export const EventsBlock: Block = {
+  slug: 'events',
+  labels: {
+    singular: l('Liste de salons', 'Trade fair list'),
+    plural: l('Listes de salons', 'Trade fair lists'),
+  },
+  fields: [
+    { name: 'title', label: l('Titre', 'Title'), type: 'text', localized: true },
+    {
+      name: 'period',
+      label: l('Salons affichés', 'Fairs shown'),
+      type: 'radio',
+      defaultValue: 'upcoming',
+      options: [
+        { label: l('À venir', 'Upcoming'), value: 'upcoming' },
+        { label: l('Passés', 'Past'), value: 'past' },
+      ],
+      admin: {
+        layout: 'horizontal',
+        description: l(
+          'Sans salon dans la période choisie, le bloc ne s’affiche pas.',
+          'The block is hidden when no fair matches.',
+        ),
+      },
+    },
+  ],
+}
+
 export const PAGE_BLOCKS: Block[] = [
   HeroBlock,
   ContentBlock,
@@ -112,4 +141,5 @@ export const PAGE_BLOCKS: Block[] = [
   GalleryBlock,
   FaqBlock,
   CtaBlock,
+  EventsBlock,
 ]
