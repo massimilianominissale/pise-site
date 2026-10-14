@@ -13,10 +13,15 @@ import type {
   Home,
   Listing,
   Navigation,
+  Event,
+  Page,
+  Post,
   Product,
   Project,
   Range,
   Setting,
+  Showroom,
+  TeamMember,
   VirtualTour,
 } from '@/payload-types'
 
@@ -283,7 +288,7 @@ export const getProductByReference = cache(async (reference: string) => {
       collection: 'products',
       depth: 0,
       limit: 1,
-      select: { slug: true, reference: true },
+      select: { slug: true, reference: true, name: true, brand: true },
       where: publishedUnlessDraft(false, { reference: { equals: candidate } }),
     })
     if (docs[0]) return docs[0]
@@ -626,4 +631,150 @@ export const getIntegrations = cache(async () => {
     },
     frameOrigins: (doc.frameOrigins ?? []).filter(Boolean) as string[],
   }
+})
+
+/* ---------- Équipe et showrooms ---------- */
+
+/** Collaborateurs proposés à la prise de rendez-vous (ceux d'une marque en premier). */
+export const getBookableMembers = cache(async (locale: Locale) => {
+  const payload = await getPayloadClient()
+  const { docs } = await payload.find({
+    collection: 'team-members',
+    locale,
+    depth: 1,
+    pagination: false,
+    sort: 'order',
+    populate: { brands: { name: true, slug: true } },
+    where: { bookable: { equals: true } },
+  })
+  return docs as TeamMember[]
+})
+
+export const getShowrooms = cache(async (locale: Locale) => {
+  const payload = await getPayloadClient()
+  const { docs } = await payload.find({
+    collection: 'showrooms',
+    locale,
+    depth: 1,
+    pagination: false,
+    sort: 'order',
+  })
+  return docs as Showroom[]
+})
+
+/* ---------- Actualités ---------- */
+
+export const POSTS_PER_PAGE = 12
+
+export const getPosts = cache(
+  async (locale: Locale, { category, page = 1 }: { category?: string; page?: number } = {}) => {
+    const payload = await getPayloadClient()
+    return payload.find({
+      collection: 'posts',
+      locale,
+      depth: 1,
+      limit: POSTS_PER_PAGE,
+      page,
+      sort: '-publishedAt',
+      populate: { brands: { name: true, slug: true } },
+      where: publishedUnlessDraft(
+        false,
+        ...(category ? [{ categories: { contains: category } } as Where] : []),
+      ),
+    })
+  },
+)
+
+export const getPostBySlug = cache(async (slug: string, locale: Locale) => {
+  const payload = await getPayloadClient()
+  const draft = await isDraft()
+  const options = {
+    collection: 'posts' as const,
+    draft,
+    depth: 2,
+    populate: {
+      ...catalogPopulate,
+      products: { name: true, slug: true, brand: true, range: true, images: true, _status: true },
+      'team-members': { name: true, jobTitle: true, photo: true },
+      events: { name: true, slug: true, startDate: true, endDate: true, city: true },
+      projects: { title: true, slug: true, cover: true, city: true, sectors: true, brands: true },
+    } as const,
+  }
+  return findLocalized<Post>(
+    locale,
+    async (l) =>
+      (
+        await payload.find({
+          ...options,
+          locale: l,
+          limit: 1,
+          where: publishedUnlessDraft(draft, { slug: { equals: slug } }),
+        })
+      ).docs[0] as Post | undefined,
+    async (id) => (await payload.findByID({ ...options, id, locale })) as Post,
+  )
+})
+
+/* ---------- Pages libres et salons ---------- */
+
+export const getPageBySlug = cache(async (slug: string, locale: Locale) => {
+  const payload = await getPayloadClient()
+  const draft = await isDraft()
+  const options = {
+    collection: 'pages' as const,
+    draft,
+    depth: 2,
+    populate: {
+      pages: { title: true, slug: true, parent: true },
+      faqs: { question: true, answer: true },
+    } as const,
+  }
+  return findLocalized<Page>(
+    locale,
+    async (l) =>
+      (
+        await payload.find({
+          ...options,
+          locale: l,
+          limit: 1,
+          where: publishedUnlessDraft(draft, { slug: { equals: slug } }),
+        })
+      ).docs[0] as Page | undefined,
+    async (id) => (await payload.findByID({ ...options, id, locale })) as Page,
+  )
+})
+
+export const getEventBySlug = cache(async (slug: string, locale: Locale) => {
+  const payload = await getPayloadClient()
+  const draft = await isDraft()
+  const options = {
+    collection: 'events' as const,
+    draft,
+    depth: 1,
+    populate: {
+      brands: {
+        name: true,
+        slug: true,
+        cardImage: true,
+        heroImage: true,
+        universes: true,
+        country: true,
+        sectors: true,
+        tagline: true,
+      },
+    } as const,
+  }
+  return findLocalized<Event>(
+    locale,
+    async (l) =>
+      (
+        await payload.find({
+          ...options,
+          locale: l,
+          limit: 1,
+          where: publishedUnlessDraft(draft, { slug: { equals: slug } }),
+        })
+      ).docs[0] as Event | undefined,
+    async (id) => (await payload.findByID({ ...options, id, locale })) as Event,
+  )
 })

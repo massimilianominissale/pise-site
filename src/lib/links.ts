@@ -37,8 +37,19 @@ export const docHref = (locale: Locale, relationTo: string, doc: unknown): strin
       return localizedPath(locale, 'tours', slug)
     case 'events':
       return localizedPath(locale, 'agency', 'salons', slug)
-    case 'pages':
-      return localizedPath(locale, null, slug)
+    case 'pages': {
+      // Page enfant : /agence/equipe (pages parentes chargées avec le document).
+      const chain: string[] = []
+      let current: unknown = doc
+      for (let depth = 0; depth < 4 && current; depth++) {
+        const s = slugOf(current)
+        if (!s) break
+        chain.unshift(s)
+        const parent = (current as { parent?: unknown }).parent
+        current = parent && typeof parent === 'object' ? parent : null
+      }
+      return localizedPath(locale, null, ...chain)
+    }
     default:
       return null
   }
