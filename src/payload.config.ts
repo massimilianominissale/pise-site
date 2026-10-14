@@ -38,6 +38,7 @@ import { Integrations } from './globals/Integrations'
 import { Listings } from './globals/Listings'
 import { Navigation } from './globals/Navigation'
 import { Settings } from './globals/Settings'
+import { DEFAULT_LOCALE, isLocale, type Locale, localizedPath } from './i18n/config'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -74,6 +75,42 @@ const publicPath = (collection: string | undefined, doc: SeoDoc): string => {
   }
 }
 
+/** Adresse d'aperçu d'un document dans la langue éditée (rubriques traduites, /en et /it). */
+const previewPath = (collection: string | undefined, doc: SeoDoc, locale: Locale): string => {
+  const slug = typeof doc.slug === 'string' ? doc.slug : null
+  switch (collection) {
+    case 'brands':
+      return localizedPath(locale, 'brands', slug)
+    case 'products':
+      return localizedPath(locale, 'products', slug)
+    case 'projects':
+      return localizedPath(locale, 'projects', slug)
+    case 'posts':
+      return localizedPath(locale, 'news', slug)
+    case 'virtual-tours':
+      return localizedPath(locale, 'tours', slug)
+    case 'events':
+      return localizedPath(locale, 'agency', 'salons', slug)
+    case 'pages':
+      return localizedPath(locale, null, slug)
+    default:
+      return localizedPath(locale)
+  }
+}
+
+/** Ouvre la page en mode brouillon (route réservée à l'équipe, voir src/app/(frontend)/next/preview). */
+const previewURL = (path: string) => `${serverURL}/next/preview?path=${encodeURIComponent(path)}`
+
+const PREVIEW_COLLECTIONS = [
+  'brands',
+  'products',
+  'projects',
+  'posts',
+  'events',
+  'virtual-tours',
+  'pages',
+]
+
 export default buildConfig({
   serverURL,
   admin: {
@@ -85,6 +122,23 @@ export default buildConfig({
     },
     meta: {
       titleSuffix: ' · Agence PISE',
+    },
+    // Aperçu en direct : la page du site s'affiche à côté du formulaire et se met à jour
+    // à chaque enregistrement du brouillon.
+    livePreview: {
+      url: ({ data, collectionConfig, globalConfig, locale }) => {
+        const l: Locale = isLocale(locale?.code) ? locale.code : DEFAULT_LOCALE
+        return previewURL(
+          globalConfig ? localizedPath(l) : previewPath(collectionConfig?.slug, data as SeoDoc, l),
+        )
+      },
+      collections: PREVIEW_COLLECTIONS,
+      globals: ['home'],
+      breakpoints: [
+        { label: 'Mobile', name: 'mobile', width: 390, height: 844 },
+        { label: 'Tablette', name: 'tablet', width: 768, height: 1024 },
+        { label: 'Ordinateur', name: 'desktop', width: 1440, height: 900 },
+      ],
     },
   },
 

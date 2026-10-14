@@ -1,12 +1,14 @@
 import '@fontsource-variable/archivo'
 import '@fontsource-variable/hanken-grotesk'
 import type { Metadata, Viewport } from 'next'
+import { draftMode } from 'next/headers'
 import { notFound } from 'next/navigation'
 import type React from 'react'
 
 import { AnnouncementBar } from '@/components/site/AnnouncementBar'
 import { Footer } from '@/components/site/Footer'
 import { Header } from '@/components/site/Header'
+import { LivePreview } from '@/components/site/LivePreview'
 import { isLocale, type Locale, LOCALES } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionary'
 import { getCustomer } from '@/lib/auth'
@@ -43,6 +45,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   const locale: Locale = param
   const dict = getDictionary(locale)
 
+  const preview = (await draftMode()).isEnabled
   const [navigation, footer, settings, announcement, customer] = await Promise.all([
     getGlobal('navigation', locale),
     getGlobal('footer', locale),
@@ -81,6 +84,7 @@ export default async function LocaleLayout({ children, params }: Props) {
           {children}
         </main>
         <Footer locale={locale} dict={dict} footer={footer} settings={settings} />
+        {preview ? <LivePreview label={dict.preview.label} exitLabel={dict.preview.exit} /> : null}
       </body>
     </html>
   )
