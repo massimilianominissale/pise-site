@@ -9,6 +9,7 @@ import { Footer } from '@/components/site/Footer'
 import { Header } from '@/components/site/Header'
 import { isLocale, type Locale, LOCALES } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionary'
+import { getCustomer } from '@/lib/auth'
 import { resolveLink } from '@/lib/links'
 import { getActiveAnnouncement, getGlobal } from '@/lib/payload'
 import { INDEXABLE, SITE_URL } from '@/lib/seo'
@@ -42,12 +43,19 @@ export default async function LocaleLayout({ children, params }: Props) {
   const locale: Locale = param
   const dict = getDictionary(locale)
 
-  const [navigation, footer, settings, announcement] = await Promise.all([
+  const [navigation, footer, settings, announcement, customer] = await Promise.all([
     getGlobal('navigation', locale),
     getGlobal('footer', locale),
     getGlobal('settings', locale),
     getActiveAnnouncement(locale),
+    getCustomer(),
   ])
+  const account = customer
+    ? {
+        initials: `${customer.firstName?.[0] ?? ''}${customer.lastName?.[0] ?? ''}`.toUpperCase(),
+        company: customer.company,
+      }
+    : null
 
   return (
     <html lang={locale}>
@@ -68,7 +76,7 @@ export default async function LocaleLayout({ children, params }: Props) {
             closeLabel={dict.closeAnnouncement}
           />
         ) : null}
-        <Header locale={locale} dict={dict} navigation={navigation} />
+        <Header locale={locale} dict={dict} navigation={navigation} account={account} />
         <main id="contenu" tabIndex={-1}>
           {children}
         </main>

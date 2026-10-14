@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { frenchHolidays, isBookableDay, parisDateTimeToUtc } from '@/lib/forms'
+import { isValidSiret } from '@/lib/siret'
 
 describe('Créneaux de rendez-vous', () => {
   const today = new Date(2026, 9, 14) // mercredi 14 octobre 2026
@@ -33,5 +34,19 @@ describe('Créneaux de rendez-vous', () => {
     expect([8, 9]).toContain(hour) // 10:00 à Paris = 8:00 (été) ou 9:00 (hiver) UTC
     expect(parisDateTimeToUtc(iso, '25:00')).toBeNull()
     expect(parisDateTimeToUtc('2026-02-30', '10:00')).toBeNull()
+  })
+})
+
+describe('SIRET de la demande d’accès pro', () => {
+  it('accepte un numéro valide, espaces compris', () => {
+    expect(isValidSiret('882 345 670 00013')).toBe(true)
+  })
+  it('refuse une mauvaise clé ou une longueur fausse', () => {
+    expect(isValidSiret('88234567000014')).toBe(false)
+    expect(isValidSiret('1234')).toBe(false)
+    expect(isValidSiret('abcdefghijklmn')).toBe(false)
+  })
+  it('applique la règle particulière de La Poste', () => {
+    expect(isValidSiret('35600000000047')).toBe(true)
   })
 })

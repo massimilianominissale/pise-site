@@ -630,6 +630,7 @@ export const getIntegrations = cache(async () => {
       embedUrl: doc.mobilia?.embedUrl ?? null,
     },
     frameOrigins: (doc.frameOrigins ?? []).filter(Boolean) as string[],
+    zohoEnabled: Boolean(doc.zoho?.enabled),
   }
 })
 

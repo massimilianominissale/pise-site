@@ -22,6 +22,19 @@ export const Customers: CollectionConfig = {
     tokenExpiration: 60 * 60 * 24 * 7,
     maxLoginAttempts: 5,
     lockTime: 15 * 60 * 1000,
+    // Le lien de réinitialisation mène à l'espace pro du site, pas à l'administration.
+    forgotPassword: {
+      generateEmailSubject: () => 'Agence PISE · Réinitialiser votre mot de passe',
+      generateEmailHTML: (args) => {
+        const site =
+          process.env.NEXT_PUBLIC_SERVER_URL ||
+          (process.env.VERCEL_PROJECT_PRODUCTION_URL
+            ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+            : 'http://localhost:3000')
+        const url = `${site}/pro/mot-de-passe?token=${encodeURIComponent(String(args?.token ?? ''))}`
+        return `<p>Bonjour,</p><p>Pour choisir un nouveau mot de passe pour votre espace pro Agence PISE, suivez ce lien (valable une heure) :</p><p><a href="${url}">${url}</a></p><p>Si vous n’êtes pas à l’origine de cette demande, ignorez ce message.</p>`
+      },
+    },
   },
   access: {
     // Un client voit son propre compte ; l'équipe commerciale voit tous les comptes.

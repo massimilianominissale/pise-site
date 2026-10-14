@@ -9,10 +9,16 @@ import type { Navigation } from '@/payload-types'
 import { MobileMenu } from './MobileMenu'
 import { type NavItem, NavLinks } from './NavLinks'
 
-type Props = { locale: Locale; dict: Dictionary; navigation: Navigation | null }
+type Props = {
+  locale: Locale
+  dict: Dictionary
+  navigation: Navigation | null
+  /** Compte pro connecté : initiales et société à la place de « Espace pro ». */
+  account?: { initials: string; company: string } | null
+}
 
 /** En-tête collant : logo, menu (back-office › Navigation), espace pro et rendez-vous. */
-export function Header({ locale, dict, navigation }: Props) {
+export function Header({ locale, dict, navigation, account }: Props) {
   const items: NavItem[] = (navigation?.items ?? [])
     .map((item) => resolveLink(item.link, locale))
     .filter((l): l is NonNullable<typeof l> => Boolean(l?.label))
@@ -41,9 +47,22 @@ export function Header({ locale, dict, navigation }: Props) {
           <NavLinks items={items} className="pise-nav" />
         </nav>
         <div className="site-header__actions">
-          <Link className="site-header__pro" href={pro.href}>
-            {pro.label}
-          </Link>
+          {account ? (
+            <Link
+              className="site-header__account"
+              href={pro.href}
+              aria-label={`${pro.label} · ${account.company}`}
+            >
+              <span className="site-header__initials" aria-hidden="true">
+                {account.initials}
+              </span>
+              <span className="site-header__company">{account.company}</span>
+            </Link>
+          ) : (
+            <Link className="site-header__pro" href={pro.href}>
+              {pro.label}
+            </Link>
+          )}
           <Link className="pise-btn pise-btn--small" href={appointment.href}>
             {appointment.label}
           </Link>
