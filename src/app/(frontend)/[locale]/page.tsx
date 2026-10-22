@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import { BrandFilterGrid } from '@/components/brands/BrandFilterGrid'
 import { ProjectCard, TourCard } from '@/components/cards'
 import { ImrsivoPartner } from '@/components/home/ImrsivoPartner'
 import { Mosaic } from '@/components/home/Mosaic'
@@ -11,7 +10,6 @@ import { JsonLd } from '@/components/ui/JsonLd'
 import { Img, asMedia } from '@/components/ui/Img'
 import { isLocale, type Locale, localizedPath } from '@/i18n/config'
 import { getDictionary } from '@/i18n/dictionary'
-import { toBrandSummary } from '@/lib/brands'
 import { formatDateRange } from '@/lib/format'
 import {
   getBrands,
@@ -24,8 +22,6 @@ import { alternates, ogImages, SITE_URL } from '@/lib/seo'
 import type { Project, VirtualTour } from '@/payload-types'
 
 type Props = { params: Promise<{ locale: string }> }
-
-const UNIVERSE_ORDER = ['furniture', 'lighting', 'outdoor', 'acoustics'] as const
 
 const published = <T extends { _status?: 'draft' | 'published' | null }>(
   items: unknown[] | null | undefined,
@@ -61,19 +57,6 @@ export default async function HomePage({ params }: Props) {
     getVirtualTours(locale, { limit: 3 }),
     getUpcomingEvents(locale, 2),
   ])
-
-  // Fabricants choisis dans l'accueil (s'ils sont publiés), sinon tous, dans l'ordre du back-office.
-  const featuredIds = (home.featuredBrands ?? []).map((b) => (typeof b === 'object' ? b.id : b))
-  const brandDocs = featuredIds.length
-    ? featuredIds.map((id) => allBrands.find((b) => b.id === id)).filter((b) => b !== undefined)
-    : allBrands
-  const brands = brandDocs.map((b) => toBrandSummary(b, locale, dict))
-  const universes = UNIVERSE_ORDER.filter((u) => brands.some((b) => b.universes.includes(u))).map(
-    (u) => ({
-      value: u,
-      label: dict.universes[u],
-    }),
-  )
 
   const featuredProjects = published<Project>(home.featuredProjects)
   const projects = featuredProjects.length
@@ -125,17 +108,6 @@ export default async function HomePage({ params }: Props) {
           </div>
         </div>
       </section>
-
-      {brands.length ? (
-        <BrandFilterGrid
-          brands={brands}
-          eyebrow={dict.brands.eyebrow}
-          title={dict.brands.homeTitle}
-          allLabel={dict.all}
-          filterLabel={dict.filterBy}
-          universes={universes}
-        />
-      ) : null}
 
       {home.generator?.title ? (
         <section id="generateur" className="band band--stone">

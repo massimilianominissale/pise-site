@@ -1074,10 +1074,6 @@ a:hover .pise-link::after,
 }
 
 /* ---------- Cartes fabricants ---------- */
-.home-brands {
-  padding-top: 0;
-}
-
 .brand-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

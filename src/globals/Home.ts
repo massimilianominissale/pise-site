@@ -141,6 +141,8 @@ export const Home: GlobalConfig = {
               type: 'relationship',
               relationTo: 'brands',
               hasMany: true,
+              // Bloc « Les fabricants » retiré de l'accueil le 22/10 : champ conservé mais masqué.
+              admin: { hidden: true },
             },
             {
               name: 'generator',
