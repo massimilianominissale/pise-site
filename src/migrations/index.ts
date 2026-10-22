@@ -11,6 +11,7 @@ import * as migration_20261014_184812_ouverture_des_visites from './20261014_184
 import * as migration_20261014_200000_ancien_site from './20261014_200000_ancien_site'
 import * as migration_20261014_210000_imrsivo_et_accueil from './20261014_210000_imrsivo_et_accueil'
 import * as migration_20261014_220000_images_originales from './20261014_220000_images_originales'
+import * as migration_20261022_200000_mosaique_johanson from './20261022_200000_mosaique_johanson'
 
 export const migrations = [
   {
@@ -77,5 +78,10 @@ export const migrations = [
     up: migration_20261014_220000_images_originales.up,
     down: migration_20261014_220000_images_originales.down,
     name: '20261014_220000_images_originales',
+  },
+  {
+    up: migration_20261022_200000_mosaique_johanson.up,
+    down: migration_20261022_200000_mosaique_johanson.down,
+    name: '20261022_200000_mosaique_johanson',
   },
 ]
