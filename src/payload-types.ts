@@ -2277,9 +2277,12 @@ export interface Home {
     | {
         image: number | Media;
         brand?: (number | null) | Brand;
+        /**
+         * For reference only: not shown on the tile.
+         */
         range?: (number | null) | Range;
         /**
-         * Defaults to the collection name.
+         * The label shows the brand name. This text only appears when no brand is selected.
          */
         label?: string | null;
         size?: ('1x1' | '2x1' | '1x2' | '2x2') | null;

@@ -4,7 +4,7 @@ import { Img } from '@/components/ui/Img'
 import type { Locale } from '@/i18n/config'
 import type { Dictionary } from '@/i18n/dictionary'
 import { docHref, resolveLink } from '@/lib/links'
-import type { Brand, Home, Range } from '@/payload-types'
+import type { Brand, Home } from '@/payload-types'
 
 type Tile = NonNullable<Home['mosaic']>[number]
 
@@ -36,24 +36,19 @@ export function Mosaic({
       <div className="mosaic__grid">
         {tiles.map((tile, i) => {
           const brand = obj<Brand>(tile.brand)
-          const range = obj<Range>(tile.range)
           const href =
             resolveLink(tile.link, locale)?.href ??
             (brand ? docHref(locale, 'brands', brand) : null) ??
             '#'
-          const label = tile.label || range?.name || ''
+          // L'étiquette montre seulement la marque ; le texte libre ne sert qu'aux tuiles sans fabricant.
+          const label = brand?.name || tile.label || ''
           const size = tile.size ?? '1x1'
           return (
             <Link key={tile.id ?? i} href={href} className={`m-tile m-tile--${size}`}>
               <Img media={tile.image} sizes={SIZES[size]} priority={i < 3} />
               {tile.isNew ? <span className="m-new">{dict.brand.newBadge}</span> : null}
               {tile.pulse ? <span className="pise-pulse" aria-hidden="true" /> : null}
-              {brand || label ? (
-                <span className="m-tag">
-                  {brand ? <b>{brand.name}</b> : null}
-                  {label ? <span>{label}</span> : null}
-                </span>
-              ) : null}
+              {label ? <span className="m-tag">{label}</span> : null}
             </Link>
           )
         })}

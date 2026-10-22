@@ -57,19 +57,25 @@ export const Home: GlobalConfig = {
                       label: l('Collection', 'Collection'),
                       type: 'relationship',
                       relationTo: 'ranges',
-                      admin: { width: '50%' },
+                      admin: {
+                        width: '50%',
+                        description: l(
+                          'Pour mémoire : non affichée sur la tuile.',
+                          'For reference only: not shown on the tile.',
+                        ),
+                      },
                     },
                   ],
                 },
                 {
                   name: 'label',
-                  label: l('Étiquette (si différente)', 'Label override'),
+                  label: l('Étiquette (tuile sans fabricant)', 'Label (tile without a brand)'),
                   type: 'text',
                   localized: true,
                   admin: {
                     description: l(
-                      'Par défaut : nom de la collection.',
-                      'Defaults to the collection name.',
+                      'L’étiquette affiche le nom du fabricant. Ce texte n’apparaît que si aucun fabricant n’est choisi.',
+                      'The label shows the brand name. This text only appears when no brand is selected.',
                     ),
                   },
                 },
