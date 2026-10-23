@@ -1,4 +1,4 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, Where } from 'payload'
 
 import { isEditor, isEditorOrAI, publishedOrStaff } from '../access'
 import { slugField } from '../fields/slug'
@@ -189,6 +189,8 @@ export const Brands: CollectionConfig = {
               type: 'join',
               collection: 'ranges',
               on: 'brand',
+              // Les collections sont remplacées par « Notre sélection » (produits) depuis le 22/10.
+              admin: { hidden: true },
             },
             {
               name: 'products',
@@ -209,6 +211,26 @@ export const Brands: CollectionConfig = {
       ],
     },
     slugField({ from: 'name' }),
+    {
+      name: 'parent',
+      label: l('Marque « by »… de', 'Sub-brand of'),
+      type: 'relationship',
+      relationTo: 'brands',
+      index: true,
+      admin: {
+        position: 'sidebar',
+        description: l(
+          'Pour une marque d’un fabricant (Noon by Johanson…) : elle s’affiche sur la page de ce fabricant, pas dans la liste des fabricants.',
+          'For a brand belonging to another brand (Noon by Johanson…): shown on that brand’s page, not in the brands list.',
+        ),
+      },
+      // Un seul niveau : on ne rattache qu'à un fabricant principal, jamais à soi-même.
+      filterOptions: ({ id }): Where => {
+        const conditions: Where[] = [{ parent: { exists: false } }]
+        if (id) conditions.push({ id: { not_equals: id } })
+        return { and: conditions }
+      },
+    },
     {
       name: 'referent',
       label: l('Référent PISE', 'PISE contact'),

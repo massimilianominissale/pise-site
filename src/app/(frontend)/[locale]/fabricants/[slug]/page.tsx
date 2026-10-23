@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { BrandCard } from '@/components/brands/BrandCard'
-import { ProductCard } from '@/components/products/ProductCard'
 import { PlayIcon, ProjectCard, TourAnchor } from '@/components/cards'
 import { Img, asMedia } from '@/components/ui/Img'
 import { JsonLd } from '@/components/ui/JsonLd'
@@ -18,14 +17,14 @@ import { tourLink } from '@/lib/tours'
 import {
   getBrandBySlug,
   getBrands,
-  getProductsOfBrand,
   getProjects,
   getPublicDocumentsOfBrand,
-  getRangesOfBrand,
+  getSelectionOfBrand,
+  getSubBrands,
   getVirtualTours,
 } from '@/lib/payload'
 import { alternates, ogImages, SITE_URL } from '@/lib/seo'
-import type { Range, TeamMember } from '@/payload-types'
+import type { Brand, TeamMember } from '@/payload-types'
 
 type Props = { params: Promise<{ locale: string; slug: string }> }
 
@@ -58,9 +57,13 @@ export default async function BrandPage({ params }: Props) {
   const brand = await getBrandBySlug(slug, locale)
   if (!brand) notFound()
 
-  const [ranges, products, documents, tours, projects, allBrands] = await Promise.all([
-    getRangesOfBrand(brand.id, locale),
-    getProductsOfBrand(brand.id, locale, 4),
+  // Marque « by » (Noon by Johanson…) : rattachée à un fabricant principal.
+  const parent = brand.parent && typeof brand.parent === 'object' ? (brand.parent as Brand) : null
+  const parentHref = parent ? docHref(locale, 'brands', parent) : null
+
+  const [selection, subBrands, documents, tours, projects, allBrands] = await Promise.all([
+    getSelectionOfBrand(brand.id, locale),
+    getSubBrands(brand.id, locale),
     getPublicDocumentsOfBrand(brand.id, locale),
     getVirtualTours(locale, { brandId: brand.id, limit: 1 }),
     getProjects(locale, { brandId: brand.id, limit: 2 }),
@@ -68,7 +71,9 @@ export default async function BrandPage({ params }: Props) {
   ])
 
   const universes = universeLabels(brand, dict)
-  const eyebrow = [universes.join(', '), brand.country].filter(Boolean).join(' · ')
+  const eyebrow = [universes.join(', '), parent ? t.by(parent.name) : brand.country]
+    .filter(Boolean)
+    .join(' · ')
   const referent =
     brand.referent && typeof brand.referent === 'object' ? (brand.referent as TeamMember) : null
   const tour = tours[0]
@@ -93,8 +98,8 @@ export default async function BrandPage({ params }: Props) {
 
   const sections = [
     { id: 'histoire', label: t.story },
-    ranges.length ? { id: 'collections', label: t.collections } : null,
-    products.docs.length ? { id: 'produits', label: t.products } : null,
+    selection.length ? { id: 'selection', label: t.selection } : null,
+    subBrands.length ? { id: 'marques', label: t.subBrandsNav } : null,
     documents.length ? { id: 'documentation', label: t.documentation } : null,
     tour ? { id: 'visite', label: t.virtualTour } : null,
     projects.length ? { id: 'realisations', label: dict.projects.eyebrow } : null,
@@ -124,7 +129,17 @@ export default async function BrandPage({ params }: Props) {
                   name: dict.brands.listTitle,
                   item: `${SITE_URL}${localizedPath(locale, 'brands')}`,
                 },
-                { '@type': 'ListItem', position: 3, name: brand.name },
+                ...(parent && parentHref
+                  ? [
+                      {
+                        '@type': 'ListItem',
+                        position: 3,
+                        name: parent.name,
+                        item: `${SITE_URL}${parentHref}`,
+                      },
+                    ]
+                  : []),
+                { '@type': 'ListItem', position: parent ? 4 : 3, name: brand.name },
               ],
             },
             {
@@ -134,6 +149,7 @@ export default async function BrandPage({ params }: Props) {
               logo: logo?.url || undefined,
               url: `${SITE_URL}${docHref(locale, 'brands', brand)}`,
               sameAs: brand.website ? [brand.website] : undefined,
+              ...(parent ? { parentOrganization: { '@type': 'Brand', name: parent.name } } : {}),
             },
           ],
         }}
@@ -145,6 +161,11 @@ export default async function BrandPage({ params }: Props) {
         <div className="container brand-hero__text">
           <nav aria-label={dict.breadcrumb} className="cap brand-hero__crumb">
             <Link href={localizedPath(locale, 'brands')}>{dict.brands.listTitle}</Link> /{' '}
+            {parent && parentHref ? (
+              <>
+                <Link href={parentHref}>{parent.name}</Link> /{' '}
+              </>
+            ) : null}
             {brand.name}
           </nav>
           {eyebrow ? <span className="pise-eyebrow">{eyebrow}</span> : null}
@@ -215,27 +236,27 @@ export default async function BrandPage({ params }: Props) {
         </section>
       ) : null}
 
-      {ranges.length ? (
-        <section id="collections" className="container section section--loose">
+      {selection.length ? (
+        <section id="selection" className="container section section--loose">
           <div className="section-head">
-            <h2 className="sec-title">{t.collections}</h2>
+            <h2 className="sec-title">{t.selection}</h2>
           </div>
           <div className="range-grid">
-            {ranges.map((range: Range) => {
-              const caption = range.designer ? t.designBy(range.designer) : null
+            {selection.map((product) => {
+              const caption = product.designer ? t.designBy(product.designer) : null
               return (
                 <Link
-                  key={range.id}
+                  key={product.id}
                   className="range-card"
-                  href={docHref(locale, 'ranges', range) ?? '#'}
+                  href={docHref(locale, 'products', product) ?? '#'}
                 >
                   <div className="range-card__img">
                     <Img
-                      media={range.heroImage}
+                      media={product.images?.[0]}
                       sizes="(min-width: 1100px) 33vw, (min-width: 768px) 50vw, 100vw"
                     />
                   </div>
-                  <span className="h3">{range.name}</span>
+                  <span className="h3">{product.name}</span>
                   {caption ? <span className="cap">{caption}</span> : null}
                 </Link>
               )
@@ -244,25 +265,34 @@ export default async function BrandPage({ params }: Props) {
         </section>
       ) : null}
 
-      {products.docs.length ? (
+      {subBrands.length ? (
         <section
-          id="produits"
-          className={`container section${ranges.length ? ' section--after' : ' section--loose'}`}
+          id="marques"
+          className={`container section${selection.length ? ' section--after' : ' section--loose'}`}
         >
           <div className="section-head">
-            <h2 className="sec-title">{t.featuredProducts}</h2>
-            {products.totalDocs > products.docs.length ? (
-              <Link
-                className="pise-link"
-                href={`${localizedPath(locale, 'products')}?fabricant=${brand.slug}`}
-              >
-                {t.allProducts(brand.name)}
-              </Link>
-            ) : null}
+            <h2 className="sec-title">{t.subBrands(brand.name)}</h2>
           </div>
-          <div className="product-grid">
-            {products.docs.map((product) => (
-              <ProductCard key={product.id} product={product} locale={locale} eyebrow="range" />
+          <div className="range-grid">
+            {subBrands.map((sub) => (
+              <Link
+                key={sub.id}
+                className="range-card"
+                href={docHref(locale, 'brands', sub) ?? '#'}
+              >
+                <div className="range-card__img">
+                  <Img
+                    media={sub.cardImage ?? sub.heroImage}
+                    sizes="(min-width: 1100px) 33vw, (min-width: 768px) 50vw, 100vw"
+                  />
+                </div>
+                <span className="h3">{sub.name}</span>
+                <span className="cap">
+                  {[universeLabels(sub, dict).join(', '), t.by(brand.name)]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </span>
+              </Link>
             ))}
           </div>
         </section>

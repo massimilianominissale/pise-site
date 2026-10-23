@@ -271,6 +271,10 @@ export interface Brand {
    * Generated from the name when left empty.
    */
   slug?: string | null;
+  /**
+   * For a brand belonging to another brand (Noon by Johanson…): shown on that brand’s page, not in the brands list.
+   */
+  parent?: (number | null) | Brand;
   referent?: (number | null) | TeamMember;
   featured?: boolean | null;
   /**
@@ -1538,6 +1542,7 @@ export interface BrandsSelect<T extends boolean = true> {
         image?: T;
       };
   slug?: T;
+  parent?: T;
   referent?: T;
   featured?: T;
   order?: T;
@@ -2277,9 +2282,6 @@ export interface Home {
     | {
         image: number | Media;
         brand?: (number | null) | Brand;
-        /**
-         * For reference only: not shown on the tile.
-         */
         range?: (number | null) | Range;
         /**
          * The label shows the brand name. This text only appears when no brand is selected.

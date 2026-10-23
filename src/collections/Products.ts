@@ -15,7 +15,7 @@ export const Products: CollectionConfig = {
   admin: {
     group: GROUPS.catalogue,
     useAsTitle: 'name',
-    defaultColumns: ['name', 'reference', 'brand', 'range', '_status', 'updatedAt'],
+    defaultColumns: ['name', 'reference', 'brand', '_status', 'updatedAt'],
     listSearchableFields: ['name', 'reference'],
   },
   access: {
@@ -78,7 +78,8 @@ export const Products: CollectionConfig = {
                   type: 'relationship',
                   relationTo: 'ranges',
                   index: true,
-                  admin: { width: '50%' },
+                  // Ancienne collection d'origine, gardée pour mémoire (photos d'ambiance).
+                  admin: { width: '50%', hidden: true },
                   // Ne propose que les collections du fabricant choisi.
                   filterOptions: ({ siblingData }) => {
                     const brand = (siblingData as { brand?: unknown })?.brand

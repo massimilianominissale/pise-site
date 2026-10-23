@@ -275,7 +275,7 @@ describe('redirections de l’ancien site', () => {
   it('envoie les fiches fabricants et les salons vers les nouvelles pages', () => {
     const to = (source: string) => redirects.find((r) => r.source === source)?.destination
     expect(to('/index.php/portfolio/kymo')).toBe('/fabricants')
-    expect(to('/index.php/portfolio/noon-by-johanson')).toBe('/fabricants/johanson-design/noon')
+    expect(to('/index.php/portfolio/noon-by-johanson')).toBe('/fabricants/noon')
     expect(to('/index.php/nos-valeurs-nos-services')).toBe('/agence')
     // La règle générique /index.php/:path* vient en dernier.
     expect(redirects.at(-1)?.source).toBe('/index.php/:path*')

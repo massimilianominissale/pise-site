@@ -4,12 +4,12 @@
  * le jour où le domaine pointe vers le nouveau site.
  */
 
-/** Fiches « portfolio » de l'ancien site → fiches fabricants (et collections). */
+/** Fiches « portfolio » de l'ancien site → fiches fabricants (Noon et Decibel : marques « by Johanson »). */
 const PORTFOLIO: Record<string, string> = {
   burotime: '/fabricants/burotime',
   maffei: '/fabricants/maffei',
-  'noon-by-johanson': '/fabricants/johanson-design/noon',
-  'johanson-design-decibel-cloned': '/fabricants/johanson-design/decibel',
+  'noon-by-johanson': '/fabricants/noon',
+  'johanson-design-decibel-cloned': '/fabricants/decibel',
   'milla-milli': '/fabricants/milla-et-milli',
   axolight: '/fabricants/axolight',
   fabbian: '/fabricants/fabbian',

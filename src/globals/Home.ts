@@ -57,13 +57,8 @@ export const Home: GlobalConfig = {
                       label: l('Collection', 'Collection'),
                       type: 'relationship',
                       relationTo: 'ranges',
-                      admin: {
-                        width: '50%',
-                        description: l(
-                          'Pour mémoire : non affichée sur la tuile.',
-                          'For reference only: not shown on the tile.',
-                        ),
-                      },
+                      // Collections remplacées par « Notre sélection » : champ gardé pour mémoire.
+                      admin: { width: '50%', hidden: true },
                     },
                   ],
                 },

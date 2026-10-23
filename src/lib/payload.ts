@@ -66,6 +66,7 @@ export const getGlobal = cache(
   },
 )
 
+/** Fabricants représentés (sans les marques « by », qui s'affichent sur la page de leur fabricant). */
 export const getBrands = cache(async (locale: Locale) => {
   const payload = await getPayloadClient()
   const draft = await isDraft()
@@ -77,7 +78,24 @@ export const getBrands = cache(async (locale: Locale) => {
     limit: 100,
     sort: 'order',
     joins: false,
-    where: draft ? undefined : { _status: { equals: 'published' } },
+    where: draft
+      ? { parent: { exists: false } }
+      : { and: [{ parent: { exists: false } }, { _status: { equals: 'published' } }] },
+  })
+  return docs as Brand[]
+})
+
+/** Marques « by » d'un fabricant (Noon et Decibel pour Johanson Design). */
+export const getSubBrands = cache(async (parentId: number, locale: Locale) => {
+  const payload = await getPayloadClient()
+  const { docs } = await payload.find({
+    collection: 'brands',
+    locale,
+    depth: 1,
+    limit: 20,
+    sort: 'order',
+    joins: false,
+    where: { and: [{ parent: { equals: parentId } }, { _status: { equals: 'published' } }] },
   })
   return docs as Brand[]
 })
@@ -100,15 +118,15 @@ export const getBrandBySlug = cache(async (slug: string, locale: Locale) => {
   return (docs[0] as Brand | undefined) ?? null
 })
 
-export const getRangesOfBrand = cache(async (brandId: number, locale: Locale) => {
+/** « Notre sélection » d'un fabricant : ses produits publiés, dans l'ordre choisi. */
+export const getSelectionOfBrand = cache(async (brandId: number, locale: Locale) => {
   const payload = await getPayloadClient()
   const { docs } = await payload.find({
-    collection: 'ranges',
+    collection: 'products',
     locale,
     depth: 1,
-    limit: 50,
-    sort: 'order',
-    joins: false,
+    limit: 100,
+    sort: ['order', 'name'],
     populate: { brands: { name: true, slug: true } },
     where: { and: [{ brand: { equals: brandId } }, { _status: { equals: 'published' } }] },
   })

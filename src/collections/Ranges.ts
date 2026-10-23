@@ -5,9 +5,10 @@ import { slugField } from '../fields/slug'
 import { draftHooks, featuredFields, galleryField, GROUPS, l, versioned } from './shared'
 
 /**
- * Collections d'un fabricant (Split chez Johanson, Net chez Nardi…).
- * Le slug « ranges » évite le mot réservé « collections » de Payload ;
- * l'interface affiche « Collections ».
+ * Anciennes « collections » d'un fabricant (Split chez Johanson, Net chez Nardi…).
+ * Depuis le 22/10, la page fabricant présente « Notre sélection » : des produits. Chaque
+ * collection est devenue une fiche produit (ou une marque « by », pour Noon et Decibel) ;
+ * l'ancienne adresse redirige vers elle. La collection reste en base, masquée.
  */
 export const Ranges: CollectionConfig = {
   slug: 'ranges',
@@ -16,6 +17,7 @@ export const Ranges: CollectionConfig = {
     group: GROUPS.catalogue,
     useAsTitle: 'name',
     defaultColumns: ['name', 'brand', '_status', 'updatedAt'],
+    hidden: true,
   },
   access: {
     read: publishedOrStaff,

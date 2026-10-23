@@ -152,7 +152,6 @@ export default async function ProductPage({ params }: Props) {
   const permalink = `${SITE_URL}${permalinkPath}`
   const permalinkLabel = `${new URL(SITE_URL).host}${permalinkPath}`
   const brandHref = brand ? docHref(locale, 'brands', brand) : null
-  const rangeHref = range && brand ? docHref(locale, 'ranges', { ...range, brand }) : null
   const quoteHref = `${localizedPath(locale, 'contact')}?${new URLSearchParams({
     demande: 'devis',
     produit: product.reference,
@@ -195,19 +194,9 @@ export default async function ProductPage({ params }: Props) {
                       },
                     ]
                   : []),
-                ...(range && rangeHref
-                  ? [
-                      {
-                        '@type': 'ListItem',
-                        position: 3,
-                        name: range.name,
-                        item: `${SITE_URL}${rangeHref}`,
-                      },
-                    ]
-                  : []),
                 {
                   '@type': 'ListItem',
-                  position: 2 + (brand ? 1 : 0) + (range ? 1 : 0),
+                  position: 2 + (brand ? 1 : 0),
                   name: product.name,
                 },
               ],
@@ -256,12 +245,6 @@ export default async function ProductPage({ params }: Props) {
                 <Link href={brandHref}>{brand.name}</Link>
               </>
             ) : null}
-            {range && rangeHref ? (
-              <>
-                {' / '}
-                <Link href={rangeHref}>{range.name}</Link>
-              </>
-            ) : null}
             {' / '}
             <span aria-current="page">{product.name}</span>
           </nav>
@@ -276,9 +259,7 @@ export default async function ProductPage({ params }: Props) {
             <div className="pv__head">
               {brand ? (
                 <Link className="pise-eyebrow pv__brand" href={brandHref ?? '#'}>
-                  {[brand.name, range ? t.collection(range.name) : null]
-                    .filter(Boolean)
-                    .join(' · ')}
+                  {brand.name}
                 </Link>
               ) : null}
               <h1 className="pv__title">{product.name}</h1>
