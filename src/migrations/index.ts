@@ -15,6 +15,7 @@ import * as migration_20261022_200000_mosaique_johanson from './20261022_200000_
 import * as migration_20261022_210000_mosaique_johanson_showroom from './20261022_210000_mosaique_johanson_showroom'
 import * as migration_20261022_195000_marques_by from './20261022_195000_marques_by'
 import * as migration_20261022_220000_notre_selection from './20261022_220000_notre_selection'
+import * as migration_20261024_150000_page_agence from './20261024_150000_page_agence'
 
 export const migrations = [
   {
@@ -103,5 +104,10 @@ export const migrations = [
     up: migration_20261022_220000_notre_selection.up,
     down: migration_20261022_220000_notre_selection.down,
     name: '20261022_220000_notre_selection',
+  },
+  {
+    up: migration_20261024_150000_page_agence.up,
+    down: migration_20261024_150000_page_agence.down,
+    name: '20261024_150000_page_agence',
   },
 ]
