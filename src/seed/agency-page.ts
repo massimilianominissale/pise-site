@@ -597,8 +597,8 @@ const split = (nodes: RichNode[]) => {
 }
 
 /**
- * Mise en page : en-tête, métier (photo d'équipe), secteurs (+ trois photos), sur mesure (photo),
- * expérience, équipe (portraits), zones, showrooms, questions, appel à l'action.
+ * Mise en page : en-tête, métier (photo d'équipe), secteurs | expérience (deux colonnes), trois
+ * photos, sur mesure (photo), équipe (portraits), zones | showrooms, questions, appel à l'action.
  * Les blocs gardent le même ordre dans chaque langue : `ids` reprend leurs identifiants.
  */
 const layout = (
@@ -609,6 +609,12 @@ const layout = (
 ) => {
   const [metier, secteurs, surMesure, experience, zones, showrooms] = SECTIONS(locale)
   const content = (nodes: RichNode[]) => ({ blockType: 'content' as const, body: toLexical(nodes) })
+  // Deux sections côte à côte (une seule colonne sur mobile).
+  const columns = (left: RichNode[], right: RichNode[]) => ({
+    blockType: 'columns' as const,
+    left: toLexical(left),
+    right: toLexical(right),
+  })
   const media = (nodes: RichNode[], image: number | null, imagePosition: 'left' | 'right') =>
     image
       ? { blockType: 'mediaText' as const, image, imagePosition, ...split(nodes) }
@@ -616,15 +622,13 @@ const layout = (
   const blocks = [
     { blockType: 'hero' as const, ...HERO[locale] },
     media(metier, v.teamPhoto, 'left'),
-    content(secteurs),
+    columns(secteurs, experience),
     ...(v.sectors.length ? [{ blockType: 'gallery' as const, images: v.sectors }] : []),
     media(surMesure, v.custom, 'right'),
-    content(experience),
     ...(v.team.length
       ? [{ blockType: 'team' as const, ...TEAM_BLOCK[locale], members: v.team }]
       : []),
-    content(zones),
-    content(showrooms),
+    columns(zones, showrooms),
     { blockType: 'faq' as const, title: FAQ_TITLE[locale], faqs: v.faqs },
     {
       blockType: 'cta' as const,

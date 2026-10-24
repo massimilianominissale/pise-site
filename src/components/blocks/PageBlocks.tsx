@@ -106,6 +106,13 @@ export function PageBlocks({
                 <RichText data={block.body} locale={locale} className="article__text" />
               </section>
             )
+          case 'columns':
+            return (
+              <section key={key} className="container block-columns">
+                <RichText data={block.left} locale={locale} className="article__text" />
+                <RichText data={block.right} locale={locale} className="article__text" />
+              </section>
+            )
           case 'mediaText':
             return (
               <section

@@ -921,6 +921,41 @@ export interface Page {
             blockType: 'content';
           }
         | {
+            left?: {
+              root: {
+                type: string;
+                children: {
+                  type: any;
+                  version: number;
+                  [k: string]: unknown;
+                }[];
+                direction: ('ltr' | 'rtl') | null;
+                format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+                indent: number;
+                version: number;
+              };
+              [k: string]: unknown;
+            } | null;
+            right?: {
+              root: {
+                type: string;
+                children: {
+                  type: any;
+                  version: number;
+                  [k: string]: unknown;
+                }[];
+                direction: ('ltr' | 'rtl') | null;
+                format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+                indent: number;
+                version: number;
+              };
+              [k: string]: unknown;
+            } | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'columns';
+          }
+        | {
             image: number | Media;
             imagePosition?: ('left' | 'right') | null;
             title?: string | null;
@@ -1842,6 +1877,14 @@ export interface PagesSelect<T extends boolean = true> {
           | T
           | {
               body?: T;
+              id?: T;
+              blockName?: T;
+            };
+        columns?:
+          | T
+          | {
+              left?: T;
+              right?: T;
               id?: T;
               blockName?: T;
             };

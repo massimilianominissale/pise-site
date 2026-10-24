@@ -4740,6 +4740,31 @@ a.viewer__poster {
   max-width: calc(720px + 2 * var(--gutter));
 }
 
+/* Deux textes côte à côte, alignés sur la grille du site (une colonne sur mobile). */
+.block-columns {
+  padding-block: 48px;
+  display: grid;
+  gap: 8px;
+}
+
+.block-columns .article__text > :first-child {
+  margin-top: 0;
+}
+
+@media (min-width: 900px) {
+  .block-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 64px;
+    padding-block: 72px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .block-columns {
+    column-gap: 96px;
+  }
+}
+
 .block-media {
   align-items: center;
 }

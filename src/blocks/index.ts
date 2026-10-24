@@ -105,6 +105,29 @@ export const CtaBlock: Block = {
   ],
 }
 
+/** Deux textes côte à côte (une seule colonne sur mobile). */
+export const ColumnsBlock: Block = {
+  slug: 'columns',
+  labels: {
+    singular: l('Deux colonnes', 'Two columns'),
+    plural: l('Deux colonnes', 'Two columns'),
+  },
+  fields: [
+    {
+      name: 'left',
+      label: l('Colonne de gauche', 'Left column'),
+      type: 'richText',
+      localized: true,
+    },
+    {
+      name: 'right',
+      label: l('Colonne de droite', 'Right column'),
+      type: 'richText',
+      localized: true,
+    },
+  ],
+}
+
 /** Portraits de l'équipe, avec fonction, zone et coordonnées. */
 export const TeamBlock: Block = {
   slug: 'team',
@@ -155,6 +178,7 @@ export const EventsBlock: Block = {
 export const PAGE_BLOCKS: Block[] = [
   HeroBlock,
   ContentBlock,
+  ColumnsBlock,
   MediaTextBlock,
   GalleryBlock,
   FaqBlock,
