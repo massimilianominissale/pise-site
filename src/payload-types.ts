@@ -234,6 +234,17 @@ export interface Brand {
     | null;
   foundedYear?: number | null;
   website?: string | null;
+  /**
+   * Buttons shown next to the official website link: a link (Dropbox, maker’s site…) or a document.
+   */
+  catalogues?:
+    | {
+        label: string;
+        url?: string | null;
+        document?: (number | null) | Document;
+        id?: string | null;
+      }[]
+    | null;
   certifications?: string | null;
   sectors?: (number | Sector)[] | null;
   logo?: (number | null) | Media;
@@ -284,6 +295,32 @@ export interface Brand {
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "documents".
+ */
+export interface Document {
+  id: number;
+  title: string;
+  kind: 'datasheet' | 'catalogue' | 'pricelist' | 'cad' | 'epd' | 'manual' | 'certificate' | 'terms' | 'other';
+  access: 'public' | 'pro' | 'internal';
+  brand?: (number | null) | Brand;
+  language?: ('fr' | 'en' | 'it' | 'multi') | null;
+  year?: number | null;
+  prefix?: string | null;
+  _objectKey?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -522,32 +559,6 @@ export interface ProductCategory {
   order?: number | null;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "documents".
- */
-export interface Document {
-  id: number;
-  title: string;
-  kind: 'datasheet' | 'catalogue' | 'pricelist' | 'cad' | 'epd' | 'manual' | 'certificate' | 'terms' | 'other';
-  access: 'public' | 'pro' | 'internal';
-  brand?: (number | null) | Brand;
-  language?: ('fr' | 'en' | 'it' | 'multi') | null;
-  year?: number | null;
-  prefix?: string | null;
-  _objectKey?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1567,6 +1578,14 @@ export interface BrandsSelect<T extends boolean = true> {
       };
   foundedYear?: T;
   website?: T;
+  catalogues?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        document?: T;
+        id?: T;
+      };
   certifications?: T;
   sectors?: T;
   logo?: T;

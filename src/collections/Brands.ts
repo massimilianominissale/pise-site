@@ -123,6 +123,52 @@ export const Brands: CollectionConfig = {
               ],
             },
             {
+              name: 'catalogues',
+              label: l('Catalogues', 'Catalogues'),
+              type: 'array',
+              labels: {
+                singular: l('Catalogue', 'Catalogue'),
+                plural: l('Catalogues', 'Catalogues'),
+              },
+              admin: {
+                description: l(
+                  'Boutons affichés à côté du lien vers le site officiel : un lien (Dropbox, site du fabricant…) ou un document de la documentation.',
+                  'Buttons shown next to the official website link: a link (Dropbox, maker’s site…) or a document.',
+                ),
+              },
+              fields: [
+                {
+                  name: 'label',
+                  label: l('Libellé du bouton', 'Button label'),
+                  type: 'text',
+                  localized: true,
+                  required: true,
+                },
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'url',
+                      label: l('Lien', 'Link'),
+                      type: 'text',
+                      admin: { width: '50%' },
+                      validate: (value: unknown, { siblingData }: { siblingData: unknown }) =>
+                        value || (siblingData as { document?: unknown })?.document
+                          ? true
+                          : 'Indiquez un lien ou choisissez un document.',
+                    },
+                    {
+                      name: 'document',
+                      label: l('ou document', 'or document'),
+                      type: 'relationship',
+                      relationTo: 'documents',
+                      admin: { width: '50%' },
+                    },
+                  ],
+                },
+              ],
+            },
+            {
               name: 'certifications',
               label: l('Labels et certifications', 'Labels and certifications'),
               type: 'text',

@@ -61,7 +61,7 @@ export default async function BrandPage({ params }: Props) {
   const parent = brand.parent && typeof brand.parent === 'object' ? (brand.parent as Brand) : null
   const parentHref = parent ? docHref(locale, 'brands', parent) : null
 
-  const [selection, subBrands, documents, tours, projects, allBrands] = await Promise.all([
+  const [selection, subBrands, brandDocuments, tours, projects, allBrands] = await Promise.all([
     getSelectionOfBrand(brand.id, locale),
     getSubBrands(brand.id, locale),
     getPublicDocumentsOfBrand(brand.id, locale),
@@ -69,6 +69,20 @@ export default async function BrandPage({ params }: Props) {
     getProjects(locale, { brandId: brand.id, limit: 2 }),
     getBrands(locale),
   ])
+
+  // Catalogues : boutons à côté du site officiel (lien Dropbox… ou document de la documentation).
+  const catalogues = (brand.catalogues ?? []).flatMap((row, i) => {
+    const doc = row.document && typeof row.document === 'object' ? row.document : null
+    const href = doc?.url || row.url
+    return href && row.label ? [{ key: row.id ?? String(i), label: row.label, href }] : []
+  })
+  // La documentation ne répète pas les documents déjà proposés en bouton.
+  const catalogueDocIds = new Set(
+    (brand.catalogues ?? []).map((row) =>
+      row.document && typeof row.document === 'object' ? row.document.id : row.document,
+    ),
+  )
+  const documents = brandDocuments.filter((doc) => !catalogueDocIds.has(doc.id))
 
   const universes = universeLabels(brand, dict)
   const eyebrow = [universes.join(', '), parent ? t.by(parent.name) : brand.country]
@@ -204,6 +218,17 @@ export default async function BrandPage({ params }: Props) {
                 {t.officialSite} ↗
               </a>
             ) : null}
+            {catalogues.map((catalogue) => (
+              <a
+                key={catalogue.key}
+                className="pise-btn pise-btn--outline"
+                href={catalogue.href}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {catalogue.label} ↗
+              </a>
+            ))}
           </div>
         </div>
         {facts.length ? (
