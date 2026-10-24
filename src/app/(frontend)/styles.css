@@ -4734,9 +4734,10 @@ a.viewer__poster {
   color: rgba(255, 255, 255, 0.88);
 }
 
+/* Colonne de texte centrée : marges égales à gauche et à droite (largeur de lecture 720 px). */
 .block-content {
   padding-block: 48px;
-  max-width: 1040px;
+  max-width: calc(720px + 2 * var(--gutter));
 }
 
 .block-media {
