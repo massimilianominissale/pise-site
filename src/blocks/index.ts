@@ -105,6 +105,24 @@ export const CtaBlock: Block = {
   ],
 }
 
+/** Portraits de l'équipe, avec fonction, zone et coordonnées. */
+export const TeamBlock: Block = {
+  slug: 'team',
+  labels: { singular: l('Équipe', 'Team'), plural: l('Équipes', 'Teams') },
+  fields: [
+    { name: 'title', label: l('Titre', 'Title'), type: 'text', localized: true },
+    { name: 'text', label: l('Texte', 'Text'), type: 'textarea', localized: true },
+    {
+      name: 'members',
+      label: l('Membres', 'Members'),
+      type: 'relationship',
+      relationTo: 'team-members',
+      hasMany: true,
+      required: true,
+    },
+  ],
+}
+
 /** Liste des salons publiés (page « Salons » de l'agence). */
 export const EventsBlock: Block = {
   slug: 'events',
@@ -140,6 +158,7 @@ export const PAGE_BLOCKS: Block[] = [
   MediaTextBlock,
   GalleryBlock,
   FaqBlock,
+  TeamBlock,
   CtaBlock,
   EventsBlock,
 ]

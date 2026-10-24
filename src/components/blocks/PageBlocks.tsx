@@ -6,7 +6,7 @@ import { RichText } from '@/components/ui/RichText'
 import type { Locale } from '@/i18n/config'
 import { formatDateRange } from '@/lib/format'
 import { docHref, type LinkValue, resolveLink } from '@/lib/links'
-import type { Event, Faq, Media, Page } from '@/payload-types'
+import type { Event, Faq, Media, Page, TeamMember } from '@/payload-types'
 
 type Block = NonNullable<Page['layout']>[number]
 
@@ -139,6 +139,49 @@ export function PageBlocks({
                     />
                   </div>
                 ))}
+              </section>
+            )
+          }
+          case 'team': {
+            const members = (block.members ?? []).filter(
+              (m): m is TeamMember => typeof m === 'object' && m !== null,
+            )
+            if (!members.length) return null
+            return (
+              <section key={key} className="band band--stone block-team">
+                <div className="container">
+                  <div className="section-head block-team__head">
+                    {block.title ? <h2 className="sec-title">{block.title}</h2> : null}
+                    {block.text ? <p className="body mute">{block.text}</p> : null}
+                  </div>
+                  <ul className="team-grid">
+                    {members.map((member) => (
+                      <li key={member.id} className="team-card">
+                        <div className="team-card__img">
+                          <Img
+                            media={member.photo}
+                            sizes="(min-width: 1100px) 25vw, 50vw"
+                            className="contain"
+                          />
+                        </div>
+                        <h3 className="h3 team-card__name">{member.name}</h3>
+                        {member.jobTitle || member.zone ? (
+                          <p className="cap team-card__role">
+                            {[member.jobTitle, member.zone].filter(Boolean).join(' · ')}
+                          </p>
+                        ) : null}
+                        <p className="body team-card__contact">
+                          {member.phone ? (
+                            <a href={`tel:${member.phone.replace(/\s/g, '')}`}>{member.phone}</a>
+                          ) : null}
+                          {member.email ? (
+                            <a href={`mailto:${member.email}`}>{member.email}</a>
+                          ) : null}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </section>
             )
           }

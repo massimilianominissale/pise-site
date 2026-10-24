@@ -1,5 +1,7 @@
 import { type Locale, LOCALES, localizedPath } from '../i18n/config'
-import type { Ctx } from './brands'
+import { type Ctx, findSeedMedia } from './brands'
+import { importImage } from './legacy'
+import type { LegacyImage } from './legacy/brands'
 import { a, b, h2, p, type RichNode, toLexical, ul } from './rich'
 
 /**
@@ -495,40 +497,204 @@ export const JOHANSON_SHOWROOM = {
   order: 2,
 }
 
-type BlockIds = {
-  hero?: string
-  sections: (string | undefined)[]
-  faq?: string
-  cta?: string
-  links: (string | undefined)[]
+/* ---------- Visuels et équipe ---------- */
+
+const TEAM_PHOTO: LegacyImage = {
+  file: 'equipe-salon.jpg',
+  repo: true,
+  alt: {
+    fr: 'Merima Vasse, Benoit Marchione-Morel et Pierre-Christophe Prot devant le logo de l’Agence PISE',
+    en: 'Merima Vasse, Benoit Marchione-Morel and Pierre-Christophe Prot in front of the Agence PISE logo',
+    it: 'Merima Vasse, Benoit Marchione-Morel e Pierre-Christophe Prot davanti al logo dell’Agence PISE',
+  },
 }
 
-const layout = (locale: Locale, faqs: number[], ids: BlockIds) => [
-  { ...(ids.hero ? { id: ids.hero } : {}), blockType: 'hero' as const, ...HERO[locale] },
-  ...SECTIONS(locale).map((nodes, i) => ({
-    ...(ids.sections[i] ? { id: ids.sections[i] } : {}),
-    blockType: 'content' as const,
-    body: toLexical(nodes),
-  })),
+/** Photos de la médiathèque (déjà importées) pour les secteurs et le sur-mesure. */
+const SECTOR_PHOTOS = ['milla-archetype.jpg', 'system180-forest.jpg', 'maffei-piscine.jpg']
+const CUSTOM_PHOTO = 'system180-comptoir.jpg'
+
+type Member = {
+  name: string
+  jobTitle?: T
+  zone?: T
+  phone: string
+  email: string
+  file: string
+  bookable: boolean
+}
+
+/** L'équipe, d'après la planche de portraits illustrés fournie par PISE. */
+export const TEAM: Member[] = [
   {
-    ...(ids.faq ? { id: ids.faq } : {}),
-    blockType: 'faq' as const,
-    title: FAQ_TITLE[locale],
-    faqs,
+    name: 'Mahault Sanson',
+    jobTitle: { fr: 'Back-office', en: 'Back office', it: 'Back office' },
+    phone: '02 38 42 00 42',
+    email: 'contact1@agencepise.com',
+    file: 'equipe-mahault-sanson.png',
+    bookable: false,
   },
   {
-    ...(ids.cta ? { id: ids.cta } : {}),
-    blockType: 'cta' as const,
-    title: CTA[locale].title,
-    links: [
-      { url: '/rendez-vous', label: CTA[locale].appointment },
-      { url: '/espaces-virtuels', label: CTA[locale].tour },
-    ].map((link, i) => ({
-      ...(ids.links[i] ? { id: ids.links[i] } : {}),
-      link: { type: 'external' as const, url: link.url, label: link.label, newTab: false },
-    })),
+    name: 'Pierre-Christophe Prot',
+    jobTitle: { fr: 'Fondateur', en: 'Founder', it: 'Fondatore' },
+    zone: {
+      fr: 'Paris & Sud France',
+      en: 'Paris & southern France',
+      it: 'Parigi e Sud della Francia',
+    },
+    phone: '06 09 49 81 76',
+    email: 'pcp@agencepise.com',
+    file: 'equipe-pierre-christophe-prot.png',
+    bookable: true,
+  },
+  {
+    name: 'Merima Vasse',
+    jobTitle: { fr: 'Prescription', en: 'Specification', it: 'Prescrizione' },
+    zone: { fr: 'Paris', en: 'Paris', it: 'Parigi' },
+    phone: '06 43 04 58 55',
+    email: 'merima@agencepise.com',
+    file: 'equipe-merima-vasse.png',
+    bookable: true,
+  },
+  {
+    name: 'Benoit Marchione-Morel',
+    zone: { fr: 'Province Nord', en: 'Northern France', it: 'Nord della Francia' },
+    phone: '06 23 02 13 61',
+    email: 'benoit@agencepise.com',
+    file: 'equipe-benoit-marchione-morel.png',
+    bookable: true,
   },
 ]
+
+const TEAM_BLOCK: Record<Locale, { title: string; text: string }> = {
+  fr: {
+    title: 'L’équipe',
+    text: 'Quatre interlocuteurs entre Paris, Orléans et la province : chacun suit ses prescripteurs et ses projets, du premier rendez-vous à la livraison.',
+  },
+  en: {
+    title: 'The team',
+    text: 'Four contacts between Paris, Orléans and the regions: each one follows their specifiers and projects, from the first meeting to delivery.',
+  },
+  it: {
+    title: 'Il team',
+    text: 'Quattro interlocutori tra Parigi, Orléans e le regioni: ognuno segue i propri progettisti e progetti, dal primo appuntamento alla consegna.',
+  },
+}
+
+type Visuals = {
+  faqs: number[]
+  team: number[]
+  teamPhoto: number | null
+  sectors: number[]
+  custom: number | null
+}
+
+/** Titre (premier intertitre) et texte d'une section, pour un bloc image et texte. */
+const split = (nodes: RichNode[]) => {
+  const [first, ...rest] = nodes
+  return first?.kind === 'h'
+    ? { title: first.text, body: toLexical(rest) }
+    : { title: undefined, body: toLexical(nodes) }
+}
+
+/**
+ * Mise en page : en-tête, métier (photo d'équipe), secteurs (+ trois photos), sur mesure (photo),
+ * expérience, équipe (portraits), zones, showrooms, questions, appel à l'action.
+ * Les blocs gardent le même ordre dans chaque langue : `ids` reprend leurs identifiants.
+ */
+const layout = (
+  locale: Locale,
+  v: Visuals,
+  ids: (string | undefined)[],
+  linkIds: (string | undefined)[],
+) => {
+  const [metier, secteurs, surMesure, experience, zones, showrooms] = SECTIONS(locale)
+  const content = (nodes: RichNode[]) => ({ blockType: 'content' as const, body: toLexical(nodes) })
+  const media = (nodes: RichNode[], image: number | null, imagePosition: 'left' | 'right') =>
+    image
+      ? { blockType: 'mediaText' as const, image, imagePosition, ...split(nodes) }
+      : content(nodes)
+  const blocks = [
+    { blockType: 'hero' as const, ...HERO[locale] },
+    media(metier, v.teamPhoto, 'left'),
+    content(secteurs),
+    ...(v.sectors.length ? [{ blockType: 'gallery' as const, images: v.sectors }] : []),
+    media(surMesure, v.custom, 'right'),
+    content(experience),
+    ...(v.team.length
+      ? [{ blockType: 'team' as const, ...TEAM_BLOCK[locale], members: v.team }]
+      : []),
+    content(zones),
+    content(showrooms),
+    { blockType: 'faq' as const, title: FAQ_TITLE[locale], faqs: v.faqs },
+    {
+      blockType: 'cta' as const,
+      title: CTA[locale].title,
+      links: [
+        { url: '/rendez-vous', label: CTA[locale].appointment },
+        { url: '/espaces-virtuels', label: CTA[locale].tour },
+      ].map((link, i) => ({
+        ...(linkIds[i] ? { id: linkIds[i] } : {}),
+        link: { type: 'external' as const, url: link.url, label: link.label, newTab: false },
+      })),
+    },
+  ]
+  return blocks.map((block, i) => (ids[i] ? { id: ids[i], ...block } : block))
+}
+
+const ensureTeam = async (ctx: Ctx) => {
+  const { payload, req } = ctx
+  const ids: number[] = []
+  for (const [i, member] of TEAM.entries()) {
+    const existing = await payload.find({
+      collection: 'team-members',
+      where: { name: { equals: member.name } },
+      limit: 1,
+      depth: 0,
+      req,
+    })
+    if (existing.docs[0]) {
+      ids.push(existing.docs[0].id)
+      continue
+    }
+    const photo = await importImage(ctx, {
+      file: member.file,
+      repo: true,
+      alt: {
+        fr: `Portrait illustré de ${member.name}`,
+        en: `Illustrated portrait of ${member.name}`,
+        it: `Ritratto illustrato di ${member.name}`,
+      },
+    })
+    const doc = await payload.create({
+      collection: 'team-members',
+      locale: 'fr',
+      data: {
+        name: member.name,
+        jobTitle: member.jobTitle?.fr,
+        zone: member.zone?.fr,
+        phone: member.phone,
+        email: member.email,
+        photo,
+        bookable: member.bookable,
+        order: i + 1,
+      },
+      req,
+    })
+    for (const locale of LOCALES.filter((l) => l !== 'fr')) {
+      if (!member.jobTitle && !member.zone) continue
+      await payload.update({
+        collection: 'team-members',
+        id: doc.id,
+        locale,
+        data: { jobTitle: member.jobTitle?.[locale], zone: member.zone?.[locale] },
+        req,
+      })
+    }
+    ids.push(doc.id)
+  }
+  payload.logger.info(`Page L’agence : équipe (${ids.length} membres)`)
+  return ids
+}
 
 const createFaqs = async ({ payload, req }: Ctx) => {
   const ids: number[] = []
@@ -628,8 +794,17 @@ export const rewriteAgencyPage = async (ctx: Ctx) => {
     return false
   }
 
-  const faqs = await createFaqs(ctx)
-  let ids: BlockIds = { sections: [], links: [] }
+  const sectors = await Promise.all(SECTOR_PHOTOS.map((file) => findSeedMedia(ctx, file)))
+  const visuals: Visuals = {
+    faqs: await createFaqs(ctx),
+    team: await ensureTeam(ctx),
+    teamPhoto: await importImage(ctx, TEAM_PHOTO),
+    sectors: sectors.filter((id): id is number => id != null),
+    custom: await findSeedMedia(ctx, CUSTOM_PHOTO),
+  }
+
+  let ids: (string | undefined)[] = []
+  let linkIds: (string | undefined)[] = []
   for (const locale of LOCALES) {
     const saved = await payload.update({
       collection: 'pages',
@@ -637,7 +812,7 @@ export const rewriteAgencyPage = async (ctx: Ctx) => {
       locale,
       depth: 0,
       data: {
-        layout: layout(locale, faqs, ids) as never,
+        layout: layout(locale, visuals, ids, linkIds) as never,
         meta: { ...AGENCY_META[locale] },
         _status: 'published',
       },
@@ -646,18 +821,13 @@ export const rewriteAgencyPage = async (ctx: Ctx) => {
     // Mêmes blocs d'une langue à l'autre : les traductions s'attachent à leur identifiant.
     if (locale === 'fr') {
       const blocks = saved.layout ?? []
+      ids = blocks.map((block) => block.id ?? undefined)
       const cta = blocks.find((block) => block.blockType === 'cta')
-      ids = {
-        hero: blocks.find((block) => block.blockType === 'hero')?.id ?? undefined,
-        sections: blocks
-          .filter((block) => block.blockType === 'content')
-          .map((block) => block.id ?? undefined),
-        faq: blocks.find((block) => block.blockType === 'faq')?.id ?? undefined,
-        cta: cta?.id ?? undefined,
-        links: cta && 'links' in cta ? (cta.links ?? []).map((row) => row.id ?? undefined) : [],
-      }
+      linkIds = cta && 'links' in cta ? (cta.links ?? []).map((row) => row.id ?? undefined) : []
     }
   }
-  payload.logger.info('Page L’agence réécrite (FR, EN, IT) avec ses questions fréquentes')
+  payload.logger.info(
+    'Page L’agence réécrite (FR, EN, IT) : visuels, équipe et questions fréquentes',
+  )
   return true
 }

@@ -999,6 +999,14 @@ export interface Page {
             blockType: 'faq';
           }
         | {
+            title?: string | null;
+            text?: string | null;
+            members: (number | TeamMember)[];
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'team';
+          }
+        | {
             title: string;
             text?: string | null;
             links?:
@@ -1868,6 +1876,15 @@ export interface PagesSelect<T extends boolean = true> {
           | {
               title?: T;
               faqs?: T;
+              id?: T;
+              blockName?: T;
+            };
+        team?:
+          | T
+          | {
+              title?: T;
+              text?: T;
+              members?: T;
               id?: T;
               blockName?: T;
             };

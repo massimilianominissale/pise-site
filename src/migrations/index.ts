@@ -11,11 +11,13 @@ import * as migration_20261014_184812_ouverture_des_visites from './20261014_184
 import * as migration_20261014_200000_ancien_site from './20261014_200000_ancien_site'
 import * as migration_20261014_210000_imrsivo_et_accueil from './20261014_210000_imrsivo_et_accueil'
 import * as migration_20261014_220000_images_originales from './20261014_220000_images_originales'
+import * as migration_20261022_195000_marques_by from './20261022_195000_marques_by'
 import * as migration_20261022_200000_mosaique_johanson from './20261022_200000_mosaique_johanson'
 import * as migration_20261022_210000_mosaique_johanson_showroom from './20261022_210000_mosaique_johanson_showroom'
-import * as migration_20261022_195000_marques_by from './20261022_195000_marques_by'
 import * as migration_20261022_220000_notre_selection from './20261022_220000_notre_selection'
+import * as migration_20261024_134627_bloc_equipe from './20261024_134627_bloc_equipe'
 import * as migration_20261024_150000_page_agence from './20261024_150000_page_agence'
+import * as migration_20261024_170000_page_agence_visuels from './20261024_170000_page_agence_visuels'
 
 export const migrations = [
   {
@@ -83,8 +85,6 @@ export const migrations = [
     down: migration_20261014_220000_images_originales.down,
     name: '20261014_220000_images_originales',
   },
-  // Schéma avant les migrations de données qui lisent les fabricants (elles utilisent la
-  // configuration actuelle, qui contient déjà le champ « parent »).
   {
     up: migration_20261022_195000_marques_by.up,
     down: migration_20261022_195000_marques_by.down,
@@ -106,8 +106,18 @@ export const migrations = [
     name: '20261022_220000_notre_selection',
   },
   {
+    up: migration_20261024_134627_bloc_equipe.up,
+    down: migration_20261024_134627_bloc_equipe.down,
+    name: '20261024_134627_bloc_equipe',
+  },
+  {
     up: migration_20261024_150000_page_agence.up,
     down: migration_20261024_150000_page_agence.down,
     name: '20261024_150000_page_agence',
+  },
+  {
+    up: migration_20261024_170000_page_agence_visuels.up,
+    down: migration_20261024_170000_page_agence_visuels.down,
+    name: '20261024_170000_page_agence_visuels',
   },
 ]
